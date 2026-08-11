@@ -140,7 +140,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             تسجيل الدخول
           </h2>
           <p className="text-xs md:text-sm font-bold text-[#475569] mt-1">
-            مشروع تايم فالي — التقويم اليومي لـ د. وائل وأدهم
+            مشروع TimeValley — التقويم اليومي لـ د. وائل وأدهم
           </p>
         </div>
 

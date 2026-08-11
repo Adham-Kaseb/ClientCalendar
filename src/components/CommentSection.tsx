@@ -89,7 +89,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
       </div>
 
       {/* Add Comment Input Form */}
-      <form onSubmit={handleSubmit} className="mt-4 flex gap-2.5">
+      <form onSubmit={handleSubmit} className="mt-4 flex flex-col sm:flex-row gap-2.5">
         <input
           type="text"
           value={content}
@@ -100,7 +100,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
         <button
           type="submit"
           disabled={!content.trim()}
-          className="bg-[#0E6875] hover:bg-[#063D45] disabled:opacity-50 text-white font-extrabold text-xs md:text-sm px-5 py-3 rounded-[14px] shadow-teal flex items-center gap-2 transition-all"
+          className="bg-[#0E6875] hover:bg-[#063D45] disabled:opacity-50 text-white font-extrabold text-xs md:text-sm px-5 py-3 rounded-[14px] shadow-teal flex items-center justify-center gap-2 transition-all shrink-0"
         >
           <Send className="w-4 h-4" />
           <span>إرسال</span>

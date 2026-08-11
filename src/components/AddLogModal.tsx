@@ -86,7 +86,7 @@ export const AddLogModal: React.FC<AddLogModalProps> = ({
                 <h3 className="text-xl font-black text-[#0F172A] font-tajawal">
                   تسجيل إنجاز يومي جديد (أدهم)
                 </h3>
-                <p className="text-xs font-bold text-[#475569]">تايم فالي — المتابعة اللحظية لإنجازات د. وائل</p>
+                <p className="text-xs font-bold text-[#475569]">TimeValley — المتابعة اللحظية لإنجازات د. وائل</p>
               </div>
             </div>
 

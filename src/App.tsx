@@ -347,7 +347,7 @@ export function App() {
     // Sort all logs chronologically by log_date (ascending)
     const sortedLogs = [...logs].sort(
       (a: DailyLog, b: DailyLog) =>
-        new Date(a.log_date).getTime() - new Date(b.log_date).getTime()
+        new Date(a.log_date).getTime() - new Date(b.log_date).getTime(),
     );
 
     const targetEmail = "adhamkasebssj4@gmail.com";
@@ -355,10 +355,12 @@ export function App() {
 
     const totalDays = sortedLogs.length;
     const approvedCount = sortedLogs.filter(
-      (l: DailyLog) => l.status === "completed"
+      (l: DailyLog) => l.status === "completed",
     ).length;
 
-    triggerToast(`جاري إرسال التقرير التراكمي الشامل إلى (${targetEmail}) عبر FormBold...`);
+    triggerToast(
+      `جاري إرسال التقرير التراكمي الشامل إلى (${targetEmail}) عبر FormBold...`,
+    );
 
     try {
       const formData = new FormData();
@@ -368,7 +370,7 @@ export function App() {
       // Header Notice
       formData.append(
         "1_Project_Overview",
-        "Hi Adham, here is the complete daily work digest & approval status for Time Valley Project:"
+        "Hi Adham, here is the complete daily work digest & approval status for Time Valley Project:",
       );
 
       // Append Each Day as 2 Distinct FormBold Form Fields (Tasks on line 1, Status on line 2)
@@ -385,18 +387,18 @@ export function App() {
 
         formData.append(
           `Day_${idx + 1}_Tasks_(${log.log_date})`,
-          `Tasks: ${tasksText}`
+          `Tasks: ${tasksText}`,
         );
         formData.append(
           `Day_${idx + 1}_Status_(${log.log_date})`,
-          `Status: ${statusText}`
+          `Status: ${statusText}`,
         );
       });
 
       // Append Summary Metrics
       formData.append(
         "Summary_Metrics",
-        `Total Recorded Days: ${totalDays} | Approved Days: ${approvedCount} of ${totalDays}`
+        `Total Recorded Days: ${totalDays} | Approved Days: ${approvedCount} of ${totalDays}`,
       );
 
       // Sign-off
@@ -455,7 +457,7 @@ export function App() {
   const handleClearNotifications = async () => {
     // 1. Optimistic UI update
     setNotifications((prev: NotificationItem[]) =>
-      prev.filter((n: NotificationItem) => n.recipient_role !== currentRole)
+      prev.filter((n: NotificationItem) => n.recipient_role !== currentRole),
     );
     triggerToast("تم مسح كافة التنبيهات بنجاح");
 
@@ -467,6 +469,36 @@ export function App() {
         .eq("recipient_role", currentRole);
     } catch (err) {
       console.log("Notifications purged locally");
+    }
+  };
+
+  // Master Reset Calendar Progress (Adham / Executor Only)
+  const handleResetCalendarProgress = async () => {
+    const confirmReset = window.confirm(
+      "تنبيه وتأكيد تصفير:\n\nهل أنت أدهم وتؤكد رغبتك في تصفير وإعادة ضبط كافة سجلات وملاحظات التقويم نهائياً للإطلاق الرسمي للمشروع؟\n\n(سيتم مسح كافة الأيام والتسليمات والملاحظات والإشعارات بالكامل).",
+    );
+
+    if (!confirmReset) return;
+
+    // 1. Clear React State
+    setLogs([]);
+    setComments([]);
+    setNotifications([]);
+
+    triggerToast("جاري تصفير وإعادة ضبط التقويم للإطلاق الرسمي...");
+
+    // 2. Execute Supabase Database Purge
+    try {
+      await supabase.from("comments").delete().neq("id", "0");
+      await supabase.from("daily_logs").delete().neq("id", "0");
+      await supabase.from("notifications").delete().neq("id", "0");
+
+      triggerToast(
+        "تم تصفير كافة سجلات التقويم بنجاح وتجهيز النظام للإطلاق الرسمي!",
+      );
+    } catch (err) {
+      console.log("Calendar reset executed locally");
+      triggerToast("تم تصفير التقويم وتجهيزه للإطلاق الرسمي");
     }
   };
 
@@ -502,6 +534,7 @@ export function App() {
         notifications={notifications}
         onMarkNotificationRead={handleMarkNotificationRead}
         onClearAllNotifications={handleClearNotifications}
+        onResetCalendarProgress={handleResetCalendarProgress}
         isRealtimeConnected={isRealtimeConnected}
         authenticatedUser={authenticatedUser}
         onSignOut={handleSignOut}
@@ -522,11 +555,11 @@ export function App() {
         /* 4. Full Dashboard View */
         <main className="max-w-[1788px] mx-auto px-4 lg:px-10 pt-8 animate-fadeIn">
           {/* Project Hero Header Banner */}
-          <div className="card-elevation p-8 lg:p-10 bg-gradient-to-br from-[#0E6875] via-[#0B535E] to-[#063D45] text-white relative overflow-hidden mb-8 shadow-strong">
+          <div className="card-elevation p-5 sm:p-8 lg:p-10 bg-gradient-to-br from-[#0E6875] via-[#0B535E] to-[#063D45] text-white relative overflow-hidden mb-6 sm:mb-8 shadow-strong rounded-[24px] sm:rounded-[32px]">
             <div className="absolute -left-16 -bottom-16 w-80 h-80 rounded-full bg-white/10 blur-3xl pointer-events-none" />
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sm:gap-6 relative z-10">
               <div>
-                <h2 className="text-3xl lg:text-4xl font-black font-tajawal tracking-tight leading-tight">
+                <h2 className="text-xl sm:text-3xl lg:text-4xl font-black font-tajawal tracking-tight leading-tight">
                   لوحة المتابعة اليومية والتقويم التفاعلي
                 </h2>
                 <p className="text-sm lg:text-base text-white/90 mt-2 max-w-3xl leading-relaxed font-medium">
@@ -551,7 +584,7 @@ export function App() {
                     <>
                       <CheckCircle2 className="w-6 h-6 text-emerald-400" />
                       <span className="font-black text-base text-emerald-300">
-                        حساب أدهم (إضافة وتحديث الإنجازات)
+                        حساب أدهم
                       </span>
                     </>
                   )}
@@ -564,18 +597,21 @@ export function App() {
           <StatsCards logs={logs} currentRole={currentRole} />
 
           {/* View Switcher Tabs */}
-          <div className="flex items-center justify-between my-6 border-b border-[#E2E8F0] pb-4">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between my-4 sm:my-6 border-b border-[#E2E8F0] pb-3 sm:pb-4 gap-2">
+            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
               <button
                 onClick={() => setActiveTab("calendar")}
-                className={`flex items-center gap-2.5 px-6 py-3 rounded-[16px] text-xs md:text-sm font-black transition-all ${
+                className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3 rounded-[14px] sm:rounded-[16px] text-xs sm:text-sm font-black transition-all whitespace-nowrap ${
                   activeTab === "calendar"
                     ? "bg-[#0E6875] text-white shadow-teal ring-2 ring-[#0E6875]/20"
                     : "bg-white text-[#475569] hover:text-[#0F172A] border border-[#CBD5E1]"
                 }`}
               >
-                <Calendar className="w-4.5 h-4.5" />
-                <span>التقويم التفاعلي (Calendar Grid)</span>
+                <Calendar className="w-4 h-4 sm:w-4.5 sm:h-4.5 shrink-0" />
+                <span>التقويم التفاعلي</span>
+                <span className="hidden lg:inline text-white/80 font-normal text-xs">
+                  (Calendar Grid)
+                </span>
               </button>
 
               <button
@@ -587,7 +623,7 @@ export function App() {
                 }`}
               >
                 <GitCommit className="w-4.5 h-4.5" />
-                <span>التسلسل الزمني للإنجازات (Timeline)</span>
+                <span>التسلسل الزمني</span>
               </button>
             </div>
 

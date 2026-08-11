@@ -113,7 +113,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ logs, currentRole }) => 
 
           <p className="text-xs text-[#EE6C4D] font-extrabold mt-2.5 flex items-center gap-1.5 bg-[#FFF0EC] px-3 py-1 rounded-[10px] w-fit">
             <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>تحديثات مستمرة وموثقة في تايم فالي</span>
+            <span>تحديثات مستمرة وموثقة في TimeValley</span>
           </p>
         </div>
       </motion.div>

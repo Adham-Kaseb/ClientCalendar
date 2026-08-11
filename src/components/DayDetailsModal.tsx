@@ -57,74 +57,68 @@ export const DayDetailsModal: React.FC<DayDetailsModalProps> = ({
         >
           
           {/* Modal Header */}
-          <div className="bg-[#F8FAFC] p-6 lg:p-7 border-b border-[#E2E8F0] flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-13 h-13 rounded-[18px] bg-[#0E6875] text-white flex items-center justify-center shadow-teal">
-                <Calendar className="w-7 h-7" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-black text-[#0E6875] bg-[#E6F3F5] px-3 py-1 rounded-full border border-[#0E6875]/20">
-                    إنجاز يوم {log.log_date}
-                  </span>
-                  <span className={`px-3 py-1 rounded-full text-xs font-black ${
-                    log.status === 'completed' ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-amber-100 text-amber-900 border border-amber-300'
-                  }`}>
-                    {log.progress_percentage}% إنجاز
-                  </span>
+          <div className="bg-[#F8FAFC] p-4 sm:p-6 border-b border-[#E2E8F0] relative">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3 min-w-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] sm:rounded-[18px] bg-[#0E6875] text-white flex items-center justify-center shadow-teal shrink-0">
+                  <Calendar className="w-5 h-5 sm:w-6 sm:h-6" />
                 </div>
-                <h3 className="text-2xl font-black text-[#0F172A] mt-1.5 font-tajawal">
-                  {log.title}
-                </h3>
+                <div className="min-w-0">
+                  <h3 className="text-lg sm:text-2xl font-black text-[#0F172A] font-tajawal truncate leading-tight">
+                    {log.title}
+                  </h3>
+                  <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                    <span className="text-[11px] sm:text-xs font-black text-[#0E6875] bg-[#E6F3F5] px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full border border-[#0E6875]/20 whitespace-nowrap">
+                      إنجاز {log.log_date}
+                    </span>
+                    <span className={`px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[11px] sm:text-xs font-black whitespace-nowrap ${
+                      log.status === 'completed' ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-amber-100 text-amber-900 border border-amber-300'
+                    }`}>
+                      {log.progress_percentage}% إنجاز
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={onClose}
-              className="p-2.5 hover:bg-slate-200 text-[#475569] hover:text-[#0F172A] rounded-full transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={onClose}
+                className="p-2 hover:bg-slate-200 text-[#475569] hover:text-[#0F172A] rounded-full transition-colors shrink-0"
+              >
+                <X className="w-5 h-5 sm:w-6 sm:h-6" />
+              </motion.button>
+            </div>
           </div>
 
           {/* Modal Tabs Navigation */}
-          <div className="flex border-b border-[#E2E8F0] px-7 bg-white relative">
+          <div className="flex items-center gap-2 border-b border-[#E2E8F0] px-4 sm:px-7 bg-white relative overflow-x-auto no-scrollbar whitespace-nowrap py-2">
             <button
               onClick={() => setActiveTab('details')}
-              className={`py-4 px-5 text-sm font-black transition-colors flex items-center gap-2.5 relative ${
-                activeTab === 'details' ? 'text-[#0E6875]' : 'text-[#475569] hover:text-[#0F172A]'
+              className={`py-2.5 px-4 text-xs sm:text-sm font-black transition-all flex items-center gap-2 relative shrink-0 rounded-[12px] ${
+                activeTab === 'details' 
+                  ? 'text-[#0E6875] bg-[#E6F3F5] border border-[#0E6875]/20 shadow-sm' 
+                  : 'text-[#475569] hover:text-[#0F172A] hover:bg-slate-100'
               }`}
             >
-              <FileText className="w-4.5 h-4.5" />
+              <FileText className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
               <span>تفاصيل الإنجاز والتسليمات</span>
-              {activeTab === 'details' && (
-                <motion.div
-                  layoutId="modalTabLine"
-                  className="absolute bottom-0 inset-x-0 h-0.5 bg-[#0E6875] rounded-full"
-                />
-              )}
             </button>
 
             <button
               onClick={() => setActiveTab('comments')}
-              className={`py-4 px-5 text-sm font-black transition-colors flex items-center gap-2.5 relative ${
-                activeTab === 'comments' ? 'text-[#0E6875]' : 'text-[#475569] hover:text-[#0F172A]'
+              className={`py-2.5 px-4 text-xs sm:text-sm font-black transition-all flex items-center gap-2 relative shrink-0 rounded-[12px] ${
+                activeTab === 'comments' 
+                  ? 'text-[#0E6875] bg-[#E6F3F5] border border-[#0E6875]/20 shadow-sm' 
+                  : 'text-[#475569] hover:text-[#0F172A] hover:bg-slate-100'
               }`}
             >
-              <MessageSquare className="w-4.5 h-4.5" />
+              <MessageSquare className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
               <span>تعليقات وملاحظات د. وائل</span>
               {logComments.length > 0 && (
-                <span className="bg-[#EE6C4D] text-white text-xs font-black px-2.5 py-0.5 rounded-full shadow-coral">
+                <span className="bg-[#EE6C4D] text-white text-[11px] font-black px-2 py-0.5 rounded-full shadow-coral">
                   {logComments.length}
                 </span>
-              )}
-              {activeTab === 'comments' && (
-                <motion.div
-                  layoutId="modalTabLine"
-                  className="absolute bottom-0 inset-x-0 h-0.5 bg-[#0E6875] rounded-full"
-                />
               )}
             </button>
           </div>

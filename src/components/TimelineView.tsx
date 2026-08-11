@@ -24,7 +24,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
         <div>
           <h3 className="text-xl md:text-2xl font-black text-[#0F172A] font-tajawal flex items-center gap-2.5">
             <Calendar className="w-6 h-6 text-[#0E6875]" />
-            <span>تسلسل الإنجازات الزمني — مشروع تايم فالي</span>
+            <span>تسلسل الإنجازات الزمني — مشروع TimeValley</span>
           </h3>
           <p className="text-xs md:text-sm font-medium text-[#475569] mt-1">عرض المخطط الزمني اليومي لإنجازات أدهم والمتابعة من د. وائل</p>
         </div>

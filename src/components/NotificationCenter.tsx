@@ -42,7 +42,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 10, scale: 0.95 }}
         transition={{ type: "spring", stiffness: 400, damping: 28 }}
-        className="absolute left-0 mt-3.5 w-80 sm:w-96 bg-white/95 backdrop-blur-xl rounded-[28px] shadow-card-heavy border border-[#CBD5E1] z-[99999] overflow-hidden text-right"
+        className="absolute left-0 mt-3.5 w-[calc(100vw-32px)] sm:w-96 bg-white/95 backdrop-blur-xl rounded-[28px] shadow-card-heavy border border-[#CBD5E1] z-[99999] overflow-hidden text-right"
       >
         {/* Decorative Caret Pointer */}
         <div className="absolute -top-2 left-5 w-4 h-4 bg-white border-t border-l border-[#CBD5E1] rotate-45" />
@@ -65,7 +65,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                 )}
               </div>
               <p className="text-[11px] font-bold text-[#475569]">
-                مشروع تايم فالي
+                مشروع TimeValley
               </p>
             </div>
           </div>
