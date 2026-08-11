@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0E6875" />
+      <stop offset="100%" stop-color="#063D45" />
+    </linearGradient>
+    
+    <linearGradient id="coralGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EE6C4D" />
+      <stop offset="100%" stop-color="#DB5A3A" />
+    </linearGradient>
+
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Background Squircle Badge -->
+  <rect x="16" y="16" width="480" height="480" rx="120" fill="url(#bgGrad)" />
+
+  <!-- Outer Glowing Accent Ring -->
+  <rect x="24" y="24" width="464" height="464" rx="112" fill="none" stroke="url(#coralGrad)" stroke-width="8" opacity="0.5" />
+
+  <!-- White Inner Card -->
+  <rect x="80" y="80" width="352" height="352" rx="72" fill="#FFFFFF" filter="url(#glow)" />
+
+  <!-- Calendar Header Bar -->
+  <rect x="80" y="80" width="352" height="110" rx="72" fill="url(#bgGrad)" />
+  <rect x="80" y="160" width="352" height="30" fill="url(#bgGrad)" />
+
+  <!-- Calendar Binder Rings -->
+  <rect x="160" y="56" width="28" height="56" rx="14" fill="url(#coralGrad)" />
+  <rect x="324" y="56" width="28" height="56" rx="14" fill="url(#coralGrad)" />
+
+  <!-- Calendar Grid Dots / Cells -->
+  <circle cx="160" cy="240" r="22" fill="#E2E8F0" />
+  <circle cx="256" cy="240" r="22" fill="#E2E8F0" />
+  <circle cx="352" cy="240" r="22" fill="#E2E8F0" />
+
+  <circle cx="160" cy="320" r="22" fill="#E2E8F0" />
+  <circle cx="256" cy="320" r="22" fill="url(#coralGrad)" />
+  <circle cx="352" cy="320" r="22" fill="#E2E8F0" />
+
+  <!-- Checkmark Badge Overlay -->
+  <circle cx="340" cy="340" r="64" fill="url(#coralGrad)" filter="url(#glow)" />
+  <path d="M312 340 L332 360 L372 320" fill="none" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" />
+</svg>
