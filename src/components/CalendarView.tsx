@@ -463,7 +463,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                           استغرق {log.hours_spent} ساعة عمل
                         </span>
                         <span className="text-slate-300 font-medium">|</span>
-                        <span className="text-[#475569]">المُنفّذ: {log.created_by_name}</span>
+                        <span className="text-[#475569]">
+                          المُنفّذ: {log.created_by_name}
+                        </span>
                       </div>
 
                       <button className="w-full sm:w-auto text-xs sm:text-sm font-extrabold text-white bg-[#0E6875] hover:bg-[#063D45] px-4 py-2.5 rounded-[12px] shadow-teal transition-all text-center">

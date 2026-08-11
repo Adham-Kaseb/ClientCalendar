@@ -8,7 +8,8 @@ import {
   FileText, 
   MessageSquare, 
   Award,
-  Crown
+  Crown,
+  Trash2
 } from 'lucide-react';
 import { CommentSection } from './CommentSection.tsx';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,6 +21,7 @@ interface DayDetailsModalProps {
   onClose: () => void;
   onAddComment: (logId: string, content: string) => void;
   onApproveLog?: (logId: string) => void;
+  onDeleteLog?: (logId: string) => void;
 }
 
 export const DayDetailsModal: React.FC<DayDetailsModalProps> = ({
@@ -29,6 +31,7 @@ export const DayDetailsModal: React.FC<DayDetailsModalProps> = ({
   onClose,
   onAddComment,
   onApproveLog,
+  onDeleteLog,
 }) => {
   const [activeTab, setActiveTab] = useState<'details' | 'comments'>('details');
 
@@ -221,6 +224,19 @@ export const DayDetailsModal: React.FC<DayDetailsModalProps> = ({
             </div>
 
             <div className="flex items-center gap-3">
+              {onDeleteLog && (
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => onDeleteLog(log.id)}
+                  className="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-extrabold text-xs md:text-sm px-4 py-2.5 rounded-[12px] transition-colors"
+                  title="حذف هذا اليوم وإعادة ضبطه"
+                >
+                  <Trash2 className="w-4 h-4 text-rose-600" />
+                  <span>حذف الإنجاز</span>
+                </motion.button>
+              )}
+
               {currentRole === 'client' && onApproveLog && (
                 <motion.button
                   whileHover={{ scale: 1.03 }}

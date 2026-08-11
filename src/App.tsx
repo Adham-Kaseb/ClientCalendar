@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { motion } from "framer-motion";
 import {
   UserRole,
   DailyLog,
@@ -28,6 +29,7 @@ import {
   Sparkles,
   CheckCircle2,
   Crown,
+  RotateCcw,
 } from "lucide-react";
 import Lenis from "./lib/lenis";
 
@@ -118,7 +120,7 @@ export function App() {
           .select("*")
           .order("log_date", { ascending: true });
 
-        if (logsData && logsData.length > 0) {
+        if (logsData) {
           setLogs(logsData as DailyLog[]);
         }
 
@@ -127,7 +129,7 @@ export function App() {
           .select("*")
           .order("created_at", { ascending: true });
 
-        if (commentsData && commentsData.length > 0) {
+        if (commentsData) {
           setComments(commentsData as Comment[]);
         }
 
@@ -136,7 +138,7 @@ export function App() {
           .select("*")
           .order("created_at", { ascending: false });
 
-        if (notifData && notifData.length > 0) {
+        if (notifData) {
           setNotifications(notifData as NotificationItem[]);
         }
       } catch (err) {
@@ -548,10 +550,31 @@ export function App() {
     }
   };
 
-  // Master Reset Calendar Progress (Adham / Executor Only - Fully Realtime)
+  // Single Log Deletion & Reset for specific day (Admin / Executor)
+  const handleDeleteLog = async (logId: string) => {
+    const confirmDelete = window.confirm(
+      "هل تؤكد رغبتك في حذف وإعادة ضبط هذا اليوم تحديداً من قاعدة البيانات؟",
+    );
+
+    if (!confirmDelete) return;
+
+    setLogs((prev: DailyLog[]) => prev.filter((l: DailyLog) => l.id !== logId));
+    setComments((prev: Comment[]) => prev.filter((c: Comment) => c.log_id !== logId));
+    setSelectedLog(null);
+    triggerToast("تم حذف إنجاز هذا اليوم وإعادة ضبطه بنجاح");
+
+    try {
+      await supabase.from("comments").delete().eq("log_id", logId);
+      await supabase.from("daily_logs").delete().eq("id", logId);
+    } catch (err) {
+      console.log("Deleted log locally", err);
+    }
+  };
+
+  // Master Reset Calendar Progress (Admin - Persistent in Supabase & Realtime)
   const handleResetCalendarProgress = async () => {
     const confirmReset = window.confirm(
-      "تنبيه وتأكيد تصفير:\n\nهل أنت أدهم وتؤكد رغبتك في تصفير وإعادة ضبط كافة سجلات وملاحظات التقويم نهائياً للإطلاق الرسمي للمشروع؟\n\n(سيتم مسح كافة الأيام والتسليمات والملاحظات والإشعارات بالكامل وتحديث كافة الأجهزة المترابطة فورياً).",
+      "تنبيه وتأكيد تصفير الإنجاز:\n\nهل تؤكد رغبتك في تصفير وإعادة ضبط كافة سجلات وملاحظات التقويم نهائياً للإطلاق الرسمي للمشروع؟\n\n(سيتم مسح كافة الأيام والتسليمات والملاحظات والإشعارات بالكامل من Supabase وتحديث كافة الأجهزة المترابطة فورياً).",
     );
 
     if (!confirmReset) return;
@@ -565,7 +588,7 @@ export function App() {
           type: "broadcast",
           event: "RESET_CALENDAR",
           payload: {
-            reset_by: authenticatedUser?.name || "أدهم كاسب",
+            reset_by: authenticatedUser?.name || "المدير",
             timestamp: new Date().toISOString(),
           },
         });
@@ -584,15 +607,15 @@ export function App() {
 
     // 3. Execute Supabase Database Purge
     try {
-      await supabase.from("comments").delete().neq("id", "0");
-      await supabase.from("daily_logs").delete().neq("id", "0");
-      await supabase.from("notifications").delete().neq("id", "0");
+      await supabase.from("comments").delete().not("id", "is", null);
+      await supabase.from("daily_logs").delete().not("id", "is", null);
+      await supabase.from("notifications").delete().not("id", "is", null);
 
       triggerToast(
-        "تم تصفير كافة سجلات التقويم بنجاح وتحديث جميع الأجهزة في الوقت الفعلي (Realtime)!",
+        "تم تصفير كافة سجلات التقويم بنجاح وحذفها من Supabase وتحديث جميع الأجهزة (Realtime)!",
       );
     } catch (err) {
-      console.log("Calendar reset executed locally");
+      console.log("Calendar reset executed locally", err);
       triggerToast("تم تصفير التقويم وتجهيزه للإطلاق الرسمي");
     } finally {
       setIsResetting(false);
@@ -665,28 +688,21 @@ export function App() {
                 </p>
               </div>
 
-              {/* User Account Role Indicator Box */}
-              <div className="bg-white/15 backdrop-blur-lg p-5 rounded-[22px] border border-white/25 text-center shrink-0 w-full sm:w-auto shadow-glass">
-                <p className="text-xs font-bold text-white/80">
-                  الحساب المسجل حالياً:
-                </p>
-                <div className="flex items-center justify-center gap-2 mt-2">
-                  {currentRole === "client" ? (
-                    <>
-                      <Crown className="w-6 h-6 text-amber-400" />
-                      <span className="font-black text-base text-amber-300">
-                        حساب د. وائل (عرض للتعليق والاعتماد)
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-6 h-6 text-emerald-400" />
-                      <span className="font-black text-base text-emerald-300">
-                        حساب أدهم
-                      </span>
-                    </>
-                  )}
-                </div>
+              {/* User Account Role Indicator Box & Master Reset Button */}
+              <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
+
+
+                <motion.button
+                  whileHover={{ scale: 1.08, rotate: 180 }}
+                  whileTap={{ scale: 0.9 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  onClick={handleResetCalendarProgress}
+                  disabled={isResetting}
+                  className="w-12 h-12 flex items-center justify-center bg-gradient-to-br from-rose-600 via-rose-500 to-red-600 hover:from-rose-500 hover:to-red-500 text-white border border-white/30 backdrop-blur-xl rounded-[20px] shadow-[0_8px_20px_rgba(225,29,72,0.4)] hover:shadow-[0_10px_28px_rgba(225,29,72,0.6)] transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                  title="تصفير الإنجازات بالكامل ومسح كافة البيانات من Supabase"
+                >
+                  <RotateCcw className={`w-5 h-5 text-white ${isResetting ? "animate-spin" : ""}`} />
+                </motion.button>
               </div>
             </div>
           </div>
@@ -765,6 +781,7 @@ export function App() {
           onClose={() => setSelectedLog(null)}
           onAddComment={handleAddComment}
           onApproveLog={handleApproveLog}
+          onDeleteLog={handleDeleteLog}
         />
       )}
 

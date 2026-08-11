@@ -8,9 +8,9 @@ import {
   PlusCircle, 
   Send, 
   LogOut,
-  RotateCcw
 } from 'lucide-react';
 import { NotificationCenter } from './NotificationCenter.tsx';
+import { motion } from 'framer-motion';
 
 interface HeaderProps {
   currentRole: UserRole;
@@ -33,8 +33,6 @@ export const Header: React.FC<HeaderProps> = ({
   notifications,
   onMarkNotificationRead,
   onClearAllNotifications,
-  onResetCalendarProgress,
-  isResetting = false,
   isRealtimeConnected,
   authenticatedUser,
   onSignOut,
@@ -46,30 +44,50 @@ export const Header: React.FC<HeaderProps> = ({
   ).length;
 
   return (
-    <header className="relative md:sticky md:top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-3 sm:px-6 lg:px-10 py-3 sm:py-4 shadow-subtle transition-all">
-      <div className="max-w-[1788px] mx-auto flex flex-col md:flex-row items-center justify-between gap-3 sm:gap-4">
+    <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-xl border-b border-[#E2E8F0] px-4 sm:px-8 lg:px-12 py-3.5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all">
+      <div className="max-w-[1788px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
         
-        {/* Top Header Row on Mobile: Brand Title & Notification Trigger */}
+        {/* Brand Logo & Title Row */}
         <div className="flex items-center justify-between w-full md:w-auto">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-[#0F172A] font-tajawal">
-            مشروع TimeValley
-          </h1>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-[16px] bg-gradient-to-br from-[#0E6875] to-[#063D45] text-white flex items-center justify-center shadow-[0_4px_14px_rgba(14,104,117,0.35)] shrink-0 transform hover:rotate-6 transition-transform">
+              <Calendar className="w-5 h-5 sm:w-5.5 sm:h-5.5" />
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-[#0F172A] font-tajawal">
+                  مشروع TimeValley
+                </h1>
+                {isRealtimeConnected && (
+                  <span className="hidden sm:inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-emerald-200 shadow-sm">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    متصل مباشرة
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] font-bold text-slate-500 hidden sm:block">
+                التقويم التفاعلي لمتابعة الإنجازات والتسليمات
+              </p>
+            </div>
+          </div>
 
           {/* Mobile Notifications Bell Trigger & Logout */}
           <div className="flex md:hidden items-center gap-2">
             <div className="relative">
-              <button
+              <motion.button
+                whileTap={{ scale: 0.92 }}
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="relative p-2.5 bg-white hover:bg-[#F8FAFC] text-[#0F172A] rounded-[12px] border border-[#CBD5E1] shadow-subtle transition-all flex items-center justify-center"
+                className="relative p-2.5 bg-white hover:bg-slate-50 text-[#0F172A] rounded-[14px] border border-[#CBD5E1] shadow-sm transition-all flex items-center justify-center"
                 title="مركز التنبيهات"
               >
-                <Bell className="w-4.5 h-4.5 text-[#0E6875]" />
+                <Bell className="w-5 h-5 text-[#0E6875]" />
                 {unreadCount > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 bg-gradient-to-r from-[#EE6C4D] to-[#E55335] text-white text-[10px] font-black min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center leading-none ring-2 ring-white shadow-coral animate-pulse">
                     {unreadCount}
                   </span>
                 )}
-              </button>
+              </motion.button>
 
               {showNotifications && (
                 <NotificationCenter
@@ -83,85 +101,81 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
 
             {authenticatedUser && onSignOut && (
-              <button
+              <motion.button
+                whileTap={{ scale: 0.92 }}
                 onClick={onSignOut}
-                className="p-2.5 text-slate-400 hover:text-rose-600 bg-slate-100 hover:bg-slate-200 rounded-[12px] transition-colors"
+                className="p-2.5 text-slate-500 hover:text-rose-600 bg-slate-100 hover:bg-rose-50 rounded-[14px] transition-colors border border-slate-200"
                 title="تسجيل الخروج"
               >
                 <LogOut className="w-4.5 h-4.5" />
-              </button>
+              </motion.button>
             )}
           </div>
         </div>
 
-        {/* Action Controls & Authenticated User Identity */}
-        <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2 sm:gap-3 w-full md:w-auto">
+        {/* Action Controls & User Identity */}
+        <div className="flex flex-wrap items-center justify-center sm:justify-end gap-3 w-full md:w-auto">
           
           {/* Authenticated User Badge & Role */}
           {authenticatedUser && (
-            <div className="flex items-center gap-2 bg-[#F8FAFC] px-3 sm:px-4 py-1.5 sm:py-2 rounded-[14px] sm:rounded-[16px] border border-[#CBD5E1] shadow-inner text-[11px] sm:text-xs md:text-sm">
+            <div className="flex items-center gap-2 bg-[#F8FAFC] p-1.5 pl-3 rounded-[18px] border border-[#CBD5E1] shadow-inner text-xs md:text-sm font-tajawal">
               {authenticatedUser.role === 'client' ? (
-                <div className="flex items-center gap-1.5 text-[#EE6C4D] bg-[#FFF0EC] px-2.5 py-1 rounded-[10px] sm:rounded-[12px] border border-[#EE6C4D]/30">
-                  <Crown className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-                  <span className="font-black truncate max-w-[140px] sm:max-w-none">{authenticatedUser.name} (العميل)</span>
+                <div className="flex items-center gap-2 text-[#EE6C4D] bg-[#FFF0EC] px-3 py-1.5 rounded-[14px] border border-[#EE6C4D]/30 font-black shadow-sm">
+                  <Crown className="w-4 h-4 text-amber-500 shrink-0" />
+                  <span className="truncate max-w-[140px] sm:max-w-none">{authenticatedUser.name} (العميل)</span>
                 </div>
               ) : (
-                <div className="flex items-center gap-1.5 text-[#0E6875] bg-[#E6F3F5] px-2.5 py-1 rounded-[10px] sm:rounded-[12px] border border-[#0E6875]/30">
-                  <UserCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-                  <span className="font-black truncate max-w-[140px] sm:max-w-none">{authenticatedUser.name} (المُنفّذ)</span>
+                <div className="flex items-center gap-2 text-[#0E6875] bg-[#E6F3F5] px-3 py-1.5 rounded-[14px] border border-[#0E6875]/30 font-black shadow-sm">
+                  <UserCheck className="w-4 h-4 text-[#0E6875] shrink-0" />
+                  <span className="truncate max-w-[140px] sm:max-w-none">{authenticatedUser.name} (المُنفّذ)</span>
                 </div>
               )}
 
               {onSignOut && (
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={onSignOut}
-                  className="hidden md:block p-1.5 text-slate-400 hover:text-rose-600 transition-colors mr-1"
+                  className="hidden md:flex p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all mr-0.5"
                   title="تسجيل الخروج"
                 >
                   <LogOut className="w-4.5 h-4.5" />
-                </button>
+                </motion.button>
               )}
             </div>
           )}
 
-          {/* Protected Master Reset Button (Adham/Executor Only) */}
-          {currentRole === 'executor' && onResetCalendarProgress && (
-            <button
-              onClick={onResetCalendarProgress}
-              disabled={isResetting}
-              className="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] sm:text-xs md:text-sm font-extrabold px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-[12px] shadow-sm transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-              title="تصفير التقويم ومسح كافة سجلات المتابعة والتجهيز للإطلاق الرسمى فورياً على جميع الأجهزة (Realtime)"
-            >
-              <RotateCcw className={`w-3.5 h-3.5 text-rose-600 shrink-0 ${isResetting ? 'animate-spin' : ''}`} />
-              <span>{isResetting ? 'جاري التصفير اللحظي...' : 'تصفير التقويم للإطلاق'}</span>
-            </button>
-          )}
-
-          {/* Strict Role Action Button */}
+          {/* Role Action Button */}
           {currentRole === 'executor' ? (
-            <button
+            <motion.button
+              whileHover={{ scale: 1.03, y: -1 }}
+              whileTap={{ scale: 0.97 }}
               onClick={onOpenAddModal}
-              className="flex items-center gap-1.5 bg-[#0E6875] hover:bg-[#063D45] text-white text-[11px] sm:text-xs md:text-sm font-extrabold px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-[12px] shadow-teal transition-all transform hover:-translate-y-0.5"
+              className="flex items-center gap-2 bg-gradient-to-r from-[#0E6875] to-[#0B535E] hover:from-[#0B535E] hover:to-[#063D45] text-white text-xs sm:text-sm font-black px-5 py-3 rounded-[16px] shadow-[0_4px_16px_rgba(14,104,117,0.35)] hover:shadow-[0_6px_20px_rgba(14,104,117,0.5)] transition-all font-tajawal"
             >
-              <PlusCircle className="w-4 h-4 shrink-0" />
+              <PlusCircle className="w-4.5 h-4.5 shrink-0" />
               <span>تسجيل إنجاز اليوم</span>
-            </button>
+            </motion.button>
           ) : (
-            <button
+            <motion.button
+              whileHover={{ scale: 1.03, y: -1 }}
+              whileTap={{ scale: 0.97 }}
               onClick={onSendEmailDigest}
-              className="flex items-center gap-1.5 bg-[#EE6C4D] hover:bg-[#DB5A3A] text-white text-[11px] sm:text-xs md:text-sm font-extrabold px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-[12px] shadow-coral transition-all transform hover:-translate-y-0.5"
+              className="flex items-center gap-2 bg-gradient-to-r from-[#EE6C4D] to-[#E55335] hover:from-[#E55335] hover:to-[#D44224] text-white text-xs sm:text-sm font-black px-5 py-3 rounded-[16px] shadow-[0_4px_16px_rgba(238,108,77,0.35)] hover:shadow-[0_6px_20px_rgba(238,108,77,0.5)] transition-all font-tajawal"
               title="إرسال التقرير التنفيذي الشامل وتفاصيل التسليمات إلى د. وائل عبر الإيميل"
             >
-              <Send className="w-4 h-4 shrink-0" />
+              <Send className="w-4.5 h-4.5 shrink-0" />
               <span>إرسال التقرير لـ د. وائل</span>
-            </button>
+            </motion.button>
           )}
 
           {/* Desktop Notifications Trigger */}
           <div className="hidden md:block relative">
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => setShowNotifications(!showNotifications)}
-              className="relative p-3 bg-white hover:bg-[#F8FAFC] text-[#0F172A] rounded-[14px] border border-[#CBD5E1] shadow-subtle transition-all flex items-center justify-center"
+              className="relative p-3 bg-white hover:bg-slate-50 text-[#0F172A] rounded-[16px] border border-[#CBD5E1] shadow-sm transition-all flex items-center justify-center"
               title="مركز التنبيهات"
             >
               <Bell className="w-5 h-5 text-[#0E6875]" />
@@ -170,7 +184,7 @@ export const Header: React.FC<HeaderProps> = ({
                   {unreadCount}
                 </span>
               )}
-            </button>
+            </motion.button>
 
             {showNotifications && (
               <NotificationCenter
