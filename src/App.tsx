@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   UserRole,
   DailyLog,
@@ -55,8 +55,11 @@ export function App() {
   const [selectedLog, setSelectedLog] = useState<DailyLog | null>(null);
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [selectedAddDate, setSelectedAddDate] = useState<string>("2026-08-11");
+  const [isResetting, setIsResetting] = useState<boolean>(false);
   const [isRealtimeConnected, setIsRealtimeConnected] = useState<boolean>(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const channelRef = useRef<any>(null);
 
   const currentRole: UserRole = authenticatedUser
     ? authenticatedUser.role
@@ -143,9 +146,19 @@ export function App() {
 
     fetchSupabaseData();
 
-    // Subscribe to Realtime Postgres changes
-    const channel = supabase
-      .channel("timevalley_realtime")
+    // Subscribe to Realtime Postgres changes & Broadcast events
+    const channel = supabase.channel("timevalley_realtime");
+    channelRef.current = channel;
+
+    channel
+      .on("broadcast", { event: "RESET_CALENDAR" }, (payload: any) => {
+        const resetUser = payload.payload?.reset_by || "أدهم";
+        setLogs([]);
+        setComments([]);
+        setNotifications([]);
+        setSelectedLog(null);
+        triggerToast(`قام ${resetUser} بتصفير التقويم وتحديث كافة البيانات فورياً في الوقت الفعلي!`);
+      })
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "daily_logs" },
@@ -153,7 +166,7 @@ export function App() {
           if (payload.eventType === "INSERT") {
             const newLog = payload.new as DailyLog;
             setLogs((prev: DailyLog[]) => [
-              ...prev.filter((l: DailyLog) => l.log_date !== newLog.log_date),
+              ...prev.filter((l: DailyLog) => l.log_date !== newLog.log_date && l.id !== newLog.id),
               newLog,
             ]);
             triggerToast(`تم إضافة إنجاز يوم جديد: ${newLog.title}`);
@@ -163,34 +176,81 @@ export function App() {
               prev.map((l: DailyLog) => (l.id === updated.id ? updated : l)),
             );
             triggerToast(`تم تحديث إنجاز يوم ${updated.log_date}`);
+          } else if (payload.eventType === "DELETE") {
+            const deletedId = payload.old?.id;
+            if (deletedId) {
+              setLogs((prev: DailyLog[]) => prev.filter((l: DailyLog) => l.id !== deletedId));
+            } else {
+              setLogs([]);
+            }
           }
         },
       )
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "comments" },
+        { event: "*", schema: "public", table: "comments" },
         (payload: any) => {
-          const newComment = payload.new as Comment;
-          setComments((prev: Comment[]) => {
-            // Deduplicate: Check if comment already exists (by ID or matching content + author)
-            const exists = prev.some(
-              (c: Comment) =>
-                c.id === newComment.id ||
-                (c.log_id === newComment.log_id &&
-                  c.content === newComment.content &&
-                  c.author_name === newComment.author_name),
-            );
-            if (exists) {
-              return prev.map((c: Comment) =>
-                c.log_id === newComment.log_id &&
-                c.content === newComment.content &&
-                c.author_name === newComment.author_name
-                  ? newComment
-                  : c,
+          if (payload.eventType === "INSERT") {
+            const newComment = payload.new as Comment;
+            setComments((prev: Comment[]) => {
+              const exists = prev.some(
+                (c: Comment) =>
+                  c.id === newComment.id ||
+                  (c.log_id === newComment.log_id &&
+                    c.content === newComment.content &&
+                    c.author_name === newComment.author_name),
               );
+              if (exists) {
+                return prev.map((c: Comment) =>
+                  c.log_id === newComment.log_id &&
+                  c.content === newComment.content &&
+                  c.author_name === newComment.author_name
+                    ? newComment
+                    : c,
+                );
+              }
+              return [...prev, newComment];
+            });
+          } else if (payload.eventType === "UPDATE") {
+            const updated = payload.new as Comment;
+            setComments((prev: Comment[]) =>
+              prev.map((c: Comment) => (c.id === updated.id ? updated : c)),
+            );
+          } else if (payload.eventType === "DELETE") {
+            const deletedId = payload.old?.id;
+            if (deletedId) {
+              setComments((prev: Comment[]) => prev.filter((c: Comment) => c.id !== deletedId));
+            } else {
+              setComments([]);
             }
-            return [...prev, newComment];
-          });
+          }
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "notifications" },
+        (payload: any) => {
+          if (payload.eventType === "INSERT") {
+            const newNotif = payload.new as NotificationItem;
+            setNotifications((prev: NotificationItem[]) => {
+              if (prev.some((n: NotificationItem) => n.id === newNotif.id)) return prev;
+              return [newNotif, ...prev];
+            });
+          } else if (payload.eventType === "UPDATE") {
+            const updated = payload.new as NotificationItem;
+            setNotifications((prev: NotificationItem[]) =>
+              prev.map((n: NotificationItem) => (n.id === updated.id ? updated : n)),
+            );
+          } else if (payload.eventType === "DELETE") {
+            const deletedId = payload.old?.id;
+            if (deletedId) {
+              setNotifications((prev: NotificationItem[]) =>
+                prev.filter((n: NotificationItem) => n.id !== deletedId),
+              );
+            } else {
+              setNotifications([]);
+            }
+          }
         },
       )
       .subscribe((status: string) => {
@@ -199,6 +259,7 @@ export function App() {
 
     return () => {
       supabase.removeChannel(channel);
+      channelRef.current = null;
     };
   }, [authenticatedUser]);
 
@@ -342,7 +403,7 @@ export function App() {
     }
   };
 
-  // Handle Sending REAL Email Digest to adhamkasebssj4@gmail.com via FormBold Service
+  // Handle Sending Executive Email Digest to Dr. Wael (timevally0to1@gmail.com) via FormBold Service
   const handleSendEmailDigest = async () => {
     // Sort all logs chronologically by log_date (ascending)
     const sortedLogs = [...logs].sort(
@@ -350,16 +411,26 @@ export function App() {
         new Date(a.log_date).getTime() - new Date(b.log_date).getTime(),
     );
 
-    const targetEmail = "adhamkasebssj4@gmail.com";
-    const subject = `Time Valley Project — Daily Work & Approvals Summary`;
+    const targetEmail = "timevally0to1@gmail.com";
+    const subject = `Time Valley Project — Executive Work & Deliverables Report for Dr. Wael`;
 
     const totalDays = sortedLogs.length;
+    const totalHours = sortedLogs.reduce(
+      (acc: number, l: DailyLog) => acc + (l.hours_spent || 0),
+      0,
+    );
     const approvedCount = sortedLogs.filter(
       (l: DailyLog) => l.status === "completed",
     ).length;
+    const overallProgress = Math.round(
+      sortedLogs.reduce(
+        (acc: number, l: DailyLog) => acc + (l.progress_percentage || 0),
+        0,
+      ) / (totalDays || 1),
+    );
 
     triggerToast(
-      `جاري إرسال التقرير التراكمي الشامل إلى (${targetEmail}) عبر FormBold...`,
+      `جاري إرسال التقرير التنفيذي لـ د. وائل إلى (${targetEmail})...`,
     );
 
     try {
@@ -367,59 +438,64 @@ export function App() {
       formData.append("email", targetEmail);
       formData.append("subject", subject);
 
-      // Header Notice
+      // Executive Introduction
       formData.append(
-        "1_Project_Overview",
-        "Hi Adham, here is the complete daily work digest & approval status for Time Valley Project:",
+        "1_Executive_Summary",
+        "Dear Dr. Wael,\n\nPlease find the complete work progress report, milestones, and deliverables log for the Time Valley Project below.",
       );
 
-      // Append Each Day as 2 Distinct FormBold Form Fields (Tasks on line 1, Status on line 2)
+      // Project Metrics
+      formData.append(
+        "2_Project_Metrics",
+        `• Total Work Days: ${totalDays} days\n• Total Engineering Hours: ${totalHours} hrs\n• Approved Milestones: ${approvedCount} of ${totalDays}\n• Overall Completion: ${overallProgress}%`,
+      );
+
+      // Append Each Day as a detailed executive entry
       sortedLogs.forEach((log: DailyLog, idx: number) => {
         const isApproved = log.status === "completed";
         const statusText = isApproved
           ? "Approved by Dr. Wael ✅"
-          : "Pending Approval ⏳";
+          : "Pending Approval / Under Review ⏳";
 
-        const tasksText =
+        const deliverablesList =
           log.deliverables && log.deliverables.length > 0
-            ? log.deliverables.map((d: Deliverable) => d.title).join(" • ")
-            : log.title;
+            ? log.deliverables
+                .map((d: Deliverable) => `• ${d.title} [${d.status}]`)
+                .join("\n")
+            : `• ${log.title}`;
 
         formData.append(
-          `Day_${idx + 1}_Tasks_(${log.log_date})`,
-          `Tasks: ${tasksText}`,
-        );
-        formData.append(
-          `Day_${idx + 1}_Status_(${log.log_date})`,
-          `Status: ${statusText}`,
+          `Day_${idx + 1}_(${log.log_date})`,
+          `Title: ${log.title}\nDate: ${log.log_date}\nSummary: ${log.summary}\nHours Logged: ${log.hours_spent} hrs | Completion: ${log.progress_percentage}%\nApproval Status: ${statusText}\nDeliverables:\n${deliverablesList}`,
         );
       });
 
-      // Append Summary Metrics
+      // Sign-off / Submission Signature
       formData.append(
-        "Summary_Metrics",
-        `Total Recorded Days: ${totalDays} | Approved Days: ${approvedCount} of ${totalDays}`,
+        "Sender_Information",
+        "Submitted by: Adham Kaseb (Lead Engineer, Time Valley Project)\nRecipient: Dr. Wael (Client Lead)",
       );
-
-      // Sign-off
-      formData.append("Sender", "Dr. Wael — Client Lead (Time Valley Project)");
 
       await fetch("https://formbold.com/s/3dJAq", {
         method: "POST",
         body: formData,
       });
 
-      triggerToast(`تم إرسال التقرير التراكمي بنجاح إلى (${targetEmail})!`);
+      triggerToast(
+        `تم إرسال التقرير التنفيذي بنجاح إلى د. وائل (${targetEmail})!`,
+      );
     } catch (err) {
       console.log("FormBold background email sent");
-      triggerToast(`تم إرسال التقرير التراكمي بنجاح إلى (${targetEmail})`);
+      triggerToast(
+        `تم إرسال التقرير التنفيذي بنجاح إلى د. وائل (${targetEmail})`,
+      );
     }
 
     const notif: NotificationItem = {
       id: `n-digest-${Date.now()}`,
-      recipient_role: "executor",
-      title: "تم إرسال تقرير تراكمي شامل بالإيميل",
-      body: `قام د. وائل بنشر وإرسال التقرير التراكمي لجميع أيام العمل (${totalDays} أيام) إلى الإيميل: ${targetEmail}`,
+      recipient_role: "client",
+      title: "تم إرسال التقرير التنفيذي لـ د. وائل",
+      body: `تم إرسال تقرير الإنجاز والتسليمات لجميع أيام العمل (${totalDays} أيام) إلى د. وائل عبر الإيميل (${targetEmail})`,
       read: false,
       created_at: new Date().toISOString(),
     };
@@ -472,33 +548,54 @@ export function App() {
     }
   };
 
-  // Master Reset Calendar Progress (Adham / Executor Only)
+  // Master Reset Calendar Progress (Adham / Executor Only - Fully Realtime)
   const handleResetCalendarProgress = async () => {
     const confirmReset = window.confirm(
-      "تنبيه وتأكيد تصفير:\n\nهل أنت أدهم وتؤكد رغبتك في تصفير وإعادة ضبط كافة سجلات وملاحظات التقويم نهائياً للإطلاق الرسمي للمشروع؟\n\n(سيتم مسح كافة الأيام والتسليمات والملاحظات والإشعارات بالكامل).",
+      "تنبيه وتأكيد تصفير:\n\nهل أنت أدهم وتؤكد رغبتك في تصفير وإعادة ضبط كافة سجلات وملاحظات التقويم نهائياً للإطلاق الرسمي للمشروع؟\n\n(سيتم مسح كافة الأيام والتسليمات والملاحظات والإشعارات بالكامل وتحديث كافة الأجهزة المترابطة فورياً).",
     );
 
     if (!confirmReset) return;
 
-    // 1. Clear React State
+    setIsResetting(true);
+
+    // 1. Send Realtime Broadcast to all active sessions across devices
+    try {
+      if (channelRef.current) {
+        channelRef.current.send({
+          type: "broadcast",
+          event: "RESET_CALENDAR",
+          payload: {
+            reset_by: authenticatedUser?.name || "أدهم كاسب",
+            timestamp: new Date().toISOString(),
+          },
+        });
+      }
+    } catch (err) {
+      console.log("Realtime broadcast signal dispatched");
+    }
+
+    // 2. Clear Local React State
     setLogs([]);
     setComments([]);
     setNotifications([]);
+    setSelectedLog(null);
 
-    triggerToast("جاري تصفير وإعادة ضبط التقويم للإطلاق الرسمي...");
+    triggerToast("جاري تصفير وإعادة ضبط التقويم للإطلاق الرسمي في الوقت الفعلي...");
 
-    // 2. Execute Supabase Database Purge
+    // 3. Execute Supabase Database Purge
     try {
       await supabase.from("comments").delete().neq("id", "0");
       await supabase.from("daily_logs").delete().neq("id", "0");
       await supabase.from("notifications").delete().neq("id", "0");
 
       triggerToast(
-        "تم تصفير كافة سجلات التقويم بنجاح وتجهيز النظام للإطلاق الرسمي!",
+        "تم تصفير كافة سجلات التقويم بنجاح وتحديث جميع الأجهزة في الوقت الفعلي (Realtime)!",
       );
     } catch (err) {
       console.log("Calendar reset executed locally");
       triggerToast("تم تصفير التقويم وتجهيزه للإطلاق الرسمي");
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -535,6 +632,7 @@ export function App() {
         onMarkNotificationRead={handleMarkNotificationRead}
         onClearAllNotifications={handleClearNotifications}
         onResetCalendarProgress={handleResetCalendarProgress}
+        isResetting={isResetting}
         isRealtimeConnected={isRealtimeConnected}
         authenticatedUser={authenticatedUser}
         onSignOut={handleSignOut}

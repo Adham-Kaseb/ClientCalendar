@@ -20,6 +20,7 @@ interface HeaderProps {
   onMarkNotificationRead: (id: string) => void;
   onClearAllNotifications: () => void;
   onResetCalendarProgress?: () => void;
+  isResetting?: boolean;
   isRealtimeConnected: boolean;
   authenticatedUser?: AuthUser | null;
   onSignOut?: () => void;
@@ -33,6 +34,7 @@ export const Header: React.FC<HeaderProps> = ({
   onMarkNotificationRead,
   onClearAllNotifications,
   onResetCalendarProgress,
+  isResetting = false,
   isRealtimeConnected,
   authenticatedUser,
   onSignOut,
@@ -126,11 +128,12 @@ export const Header: React.FC<HeaderProps> = ({
           {currentRole === 'executor' && onResetCalendarProgress && (
             <button
               onClick={onResetCalendarProgress}
-              className="flex items-center gap-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] sm:text-xs md:text-sm font-extrabold px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-[12px] shadow-sm transition-all transform hover:-translate-y-0.5"
-              title="تصفير التقويم ومسح كافة سجلات المتابعة والتجهيز للإطلاق الرسمى"
+              disabled={isResetting}
+              className="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] sm:text-xs md:text-sm font-extrabold px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-[12px] shadow-sm transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              title="تصفير التقويم ومسح كافة سجلات المتابعة والتجهيز للإطلاق الرسمى فورياً على جميع الأجهزة (Realtime)"
             >
-              <RotateCcw className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-              <span>تصفير التقويم للإطلاق</span>
+              <RotateCcw className={`w-3.5 h-3.5 text-rose-600 shrink-0 ${isResetting ? 'animate-spin' : ''}`} />
+              <span>{isResetting ? 'جاري التصفير اللحظي...' : 'تصفير التقويم للإطلاق'}</span>
             </button>
           )}
 
@@ -147,9 +150,10 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={onSendEmailDigest}
               className="flex items-center gap-1.5 bg-[#EE6C4D] hover:bg-[#DB5A3A] text-white text-[11px] sm:text-xs md:text-sm font-extrabold px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-[12px] shadow-coral transition-all transform hover:-translate-y-0.5"
+              title="إرسال التقرير التنفيذي الشامل وتفاصيل التسليمات إلى د. وائل عبر الإيميل"
             >
               <Send className="w-4 h-4 shrink-0" />
-              <span>إرسال إشعار تلخيصي</span>
+              <span>إرسال التقرير لـ د. وائل</span>
             </button>
           )}
 
