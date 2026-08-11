@@ -10,10 +10,11 @@ import {
   UserCheck, 
   Calendar, 
   ArrowLeft,
-  Sparkles,
+  KeyRound,
+  ShieldCheck,
   AlertCircle
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface LoginPageProps {
   onLoginSuccess: (user: AuthUser) => void;
@@ -25,6 +26,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  // Secret passcode state to unlock quick login buttons
+  const [showSecretInput, setShowSecretInput] = useState<boolean>(false);
+  const [secretPasscode, setSecretPasscode] = useState<string>('');
+  const [isQuickUnlocked, setIsQuickUnlocked] = useState<boolean>(false);
 
   // Static user database
   const STATIC_USERS: AuthUser[] = [
@@ -85,6 +91,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
       setErrorMsg('اسم المستخدم أو كلمة المرور غير صحيحة');
       setIsLoading(false);
+    }
+  };
+
+  // Check developer secret passcode ("ssss")
+  const handleSecretPasscodeChange = (val: string) => {
+    setSecretPasscode(val);
+    if (val.trim().toLowerCase() === 'ssss') {
+      setIsQuickUnlocked(true);
     }
   };
 
@@ -153,7 +167,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="dr.wael أو adham"
+                placeholder="أدخل اسم المستخدم..."
                 className="w-full bg-[#F8FAFC] border border-[#CBD5E1] rounded-[14px] pr-11 pl-4 py-3 text-sm font-extrabold text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#0E6875]"
                 required
               />
@@ -199,40 +213,86 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
         </form>
 
-        {/* Quick Demo Login Divider */}
-        <div className="my-6 flex items-center gap-3">
-          <div className="flex-1 h-px bg-[#CBD5E1]" />
-          <span className="text-[11px] font-black text-[#475569] uppercase">الدخول السريع للاختبار</span>
-          <div className="flex-1 h-px bg-[#CBD5E1]" />
-        </div>
+        {/* Secret Developer Unlock Trigger Section */}
+        <div className="mt-6 pt-4 border-t border-[#CBD5E1]/60 text-center">
+          
+          {!showSecretInput && !isQuickUnlocked ? (
+            <button
+              type="button"
+              onClick={() => setShowSecretInput(true)}
+              className="text-[11px] font-extrabold text-slate-400 hover:text-[#0E6875] transition-colors flex items-center justify-center gap-1.5 mx-auto"
+            >
+              <KeyRound className="w-3.5 h-3.5" />
+              <span>تفعيل خيارات الدخول السريع للاختبار</span>
+            </button>
+          ) : !isQuickUnlocked ? (
+            <motion.div
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-2"
+            >
+              <label className="block text-[11px] font-black text-[#0E6875]">
+                رمز تفعيل وضع الاختبار للمطوّر
+              </label>
+              <div className="relative max-w-xs mx-auto">
+                <input
+                  type="password"
+                  value={secretPasscode}
+                  onChange={(e) => handleSecretPasscodeChange(e.target.value)}
+                  placeholder="أدخل الرمز السرّي..."
+                  className="w-full bg-[#F8FAFC] border border-[#0E6875] rounded-[12px] px-3 py-2 text-center text-xs font-black text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#0E6875]"
+                  autoFocus
+                />
+              </div>
+            </motion.div>
+          ) : null}
 
-        {/* 1-Click Quick Demo Login Buttons */}
-        <div className="grid grid-cols-2 gap-3">
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => handleQuickLogin('client')}
-            className="p-3.5 rounded-[16px] bg-[#FFF0EC] hover:bg-[#FFE4DC] border border-[#EE6C4D]/30 text-right transition-colors"
-          >
-            <div className="flex items-center gap-2 mb-1">
-              <Crown className="w-4 h-4 text-[#EE6C4D]" />
-              <span className="text-xs font-black text-[#0F172A]">د. وائل (العميل)</span>
-            </div>
-            <p className="text-[10px] text-[#475569] font-bold">dr.wael / timevalley</p>
-          </motion.button>
+          {/* Quick Demo Login Buttons (Revealed ONLY when secret passcode "ssss" is entered) */}
+          <AnimatePresence>
+            {isQuickUnlocked && (
+              <motion.div
+                initial={{ opacity: 0, height: 0, y: 10 }}
+                animate={{ opacity: 1, height: 'auto', y: 0 }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-3 pt-2"
+              >
+                <div className="flex items-center justify-center gap-1.5 text-xs font-black text-emerald-800 bg-emerald-100 py-1.5 px-3 rounded-full border border-emerald-300">
+                  <ShieldCheck className="w-4 h-4 text-emerald-700" />
+                  <span>تم تفعيل الدخول السريع للاختبار بنجاح!</span>
+                </div>
 
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => handleQuickLogin('executor')}
-            className="p-3.5 rounded-[16px] bg-[#E6F3F5] hover:bg-[#D5EBF0] border border-[#0E6875]/30 text-right transition-colors"
-          >
-            <div className="flex items-center gap-2 mb-1">
-              <UserCheck className="w-4 h-4 text-[#0E6875]" />
-              <span className="text-xs font-black text-[#0F172A]">أدهم (المُنفّذ)</span>
-            </div>
-            <p className="text-[10px] text-[#475569] font-bold">adham / pass</p>
-          </motion.button>
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => handleQuickLogin('client')}
+                    className="p-3.5 rounded-[16px] bg-[#FFF0EC] hover:bg-[#FFE4DC] border border-[#EE6C4D]/30 text-right transition-colors"
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <Crown className="w-4 h-4 text-[#EE6C4D]" />
+                      <span className="text-xs font-black text-[#0F172A]">د. وائل (العميل)</span>
+                    </div>
+                    <p className="text-[10px] text-[#475569] font-bold">dr.wael / timevalley</p>
+                  </motion.button>
+
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => handleQuickLogin('executor')}
+                    className="p-3.5 rounded-[16px] bg-[#E6F3F5] hover:bg-[#D5EBF0] border border-[#0E6875]/30 text-right transition-colors"
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <UserCheck className="w-4 h-4 text-[#0E6875]" />
+                      <span className="text-xs font-black text-[#0F172A]">أدهم (المُنفّذ)</span>
+                    </div>
+                    <p className="text-[10px] text-[#475569] font-bold">adham / pass</p>
+                  </motion.button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
         </div>
 
       </motion.div>

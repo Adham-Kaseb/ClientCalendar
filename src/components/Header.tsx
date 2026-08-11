@@ -13,7 +13,6 @@ import { NotificationCenter } from './NotificationCenter.tsx';
 
 interface HeaderProps {
   currentRole: UserRole;
-  setCurrentRole: (role: UserRole) => void;
   onOpenAddModal: () => void;
   onSendEmailDigest: () => void;
   notifications: NotificationItem[];
@@ -25,7 +24,6 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   currentRole,
-  setCurrentRole,
   onOpenAddModal,
   onSendEmailDigest,
   notifications,
@@ -63,55 +61,37 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Action Controls & Role Switcher */}
+        {/* Action Controls & Authenticated User Identity */}
         <div className="flex flex-wrap items-center justify-end gap-3 w-full md:w-auto">
           
-          {/* Authenticated User Badge & Sign Out */}
+          {/* Authenticated User Badge & Role */}
           {authenticatedUser && (
-            <div className="flex items-center gap-2 bg-[#F8FAFC] px-3.5 py-1.5 rounded-[16px] border border-[#CBD5E1]">
-              <span className="text-xs font-black text-[#0F172A]">
-                مرحباً، {authenticatedUser.name}
-              </span>
+            <div className="flex items-center gap-2.5 bg-[#F8FAFC] px-4 py-2 rounded-[16px] border border-[#CBD5E1] shadow-inner">
+              {authenticatedUser.role === 'client' ? (
+                <div className="flex items-center gap-2 text-[#EE6C4D] bg-[#FFF0EC] px-3 py-1 rounded-[12px] border border-[#EE6C4D]/30">
+                  <Crown className="w-4 h-4" />
+                  <span className="text-xs md:text-sm font-black">{authenticatedUser.name} (العميل الرئيسي)</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-[#0E6875] bg-[#E6F3F5] px-3 py-1 rounded-[12px] border border-[#0E6875]/30">
+                  <UserCheck className="w-4 h-4" />
+                  <span className="text-xs md:text-sm font-black">{authenticatedUser.name} (مُنفّذ المشروع)</span>
+                </div>
+              )}
+
               {onSignOut && (
                 <button
                   onClick={onSignOut}
-                  className="p-1 text-slate-400 hover:text-rose-600 transition-colors"
+                  className="p-1.5 text-slate-400 hover:text-rose-600 transition-colors mr-1"
                   title="تسجيل الخروج"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-4.5 h-4.5" />
                 </button>
               )}
             </div>
           )}
 
-          {/* Role Switcher Controls */}
-          <div className="bg-[#F8FAFC] p-1.5 rounded-[16px] border border-[#CBD5E1] shadow-inner flex items-center gap-1.5">
-            <button
-              onClick={() => setCurrentRole('executor')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-[12px] text-xs md:text-sm font-extrabold transition-all ${
-                currentRole === 'executor'
-                  ? 'bg-[#0E6875] text-white shadow-teal ring-2 ring-[#0E6875]/20'
-                  : 'text-[#475569] hover:text-[#0F172A] hover:bg-white'
-              }`}
-            >
-              <UserCheck className="w-4 h-4" />
-              <span>أدهم (المُنفّذ)</span>
-            </button>
-
-            <button
-              onClick={() => setCurrentRole('client')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-[12px] text-xs md:text-sm font-extrabold transition-all ${
-                currentRole === 'client'
-                  ? 'bg-[#EE6C4D] text-white shadow-coral ring-2 ring-[#EE6C4D]/20'
-                  : 'text-[#475569] hover:text-[#0F172A] hover:bg-white'
-              }`}
-            >
-              <Crown className="w-4 h-4 text-amber-200" />
-              <span>د. وائل (العميل)</span>
-            </button>
-          </div>
-
-          {/* Quick Action Button for Executor vs Client */}
+          {/* Strict Role Action Button */}
           {currentRole === 'executor' ? (
             <button
               onClick={onOpenAddModal}

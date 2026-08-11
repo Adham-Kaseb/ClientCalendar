@@ -8,6 +8,8 @@ import { TimelineView } from './components/TimelineView.tsx';
 import { DayDetailsModal } from './components/DayDetailsModal.tsx';
 import { AddLogModal } from './components/AddLogModal.tsx';
 import { LoginPage } from './components/LoginPage.tsx';
+import { SplashLoader } from './components/SplashLoader.tsx';
+import { CalendarSkeleton } from './components/CalendarSkeleton.tsx';
 import { Calendar, GitCommit, Sparkles, CheckCircle2, Crown } from 'lucide-react';
 
 export function App() {
@@ -16,7 +18,9 @@ export function App() {
     return saved ? JSON.parse(saved) : null;
   });
 
-  const [currentRole, setCurrentRole] = useState<UserRole>('client');
+  const [isSplashLoading, setIsSplashLoading] = useState<boolean>(false);
+  const [isSkeletonLoading, setIsSkeletonLoading] = useState<boolean>(false);
+
   const [activeTab, setActiveTab] = useState<'calendar' | 'timeline'>('calendar');
   
   const [logs, setLogs] = useState<DailyLog[]>(INITIAL_DEMO_LOGS);
@@ -29,25 +33,21 @@ export function App() {
   const [isRealtimeConnected, setIsRealtimeConnected] = useState<boolean>(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Sync currentRole when user authenticates
-  useEffect(() => {
-    if (authenticatedUser) {
-      setCurrentRole(authenticatedUser.role);
-    }
-  }, [authenticatedUser]);
+  const currentRole: UserRole = authenticatedUser ? authenticatedUser.role : 'client';
 
   // Handle Login Success
   const handleLoginSuccess = (user: AuthUser) => {
     setAuthenticatedUser(user);
-    setCurrentRole(user.role);
     localStorage.setItem('timevalley_auth_user', JSON.stringify(user));
-    triggerToast(`أهلاً بك، ${user.name}! تم تسجيل الدخول بنجاح`);
+    setIsSplashLoading(true); // Trigger 2s splash screen
   };
 
   // Handle Sign Out
   const handleSignOut = () => {
     setAuthenticatedUser(null);
     localStorage.removeItem('timevalley_auth_user');
+    setIsSplashLoading(false);
+    setIsSkeletonLoading(false);
   };
 
   // Show temporary toast message
@@ -206,6 +206,38 @@ export function App() {
     }
   };
 
+  // Handle Log Approval by Dr. Wael
+  const handleApproveLog = async (logId: string) => {
+    const targetLog = logs.find((l: DailyLog) => l.id === logId);
+    const dateStr = targetLog?.log_date || '';
+
+    setLogs((prev: DailyLog[]) => prev.map((l: DailyLog) => l.id === logId ? { ...l, status: 'completed', progress_percentage: 100 } : l));
+    
+    const newNotif: NotificationItem = {
+      id: `notif-appr-${Date.now()}`,
+      recipient_role: 'executor',
+      title: 'تم اعتماد تقرير الإنجاز من د. وائل',
+      body: `قام د. وائل باعتتماد التقرير اليومي الخاص بيوم ${dateStr}`,
+      read: false,
+      created_at: new Date().toISOString()
+    };
+
+    setNotifications((prev: NotificationItem[]) => [newNotif, ...prev]);
+    triggerToast(`تم اعتماد تقرير الإنجاز اليومي (${dateStr}) بنجاح من د. وائل!`);
+    setSelectedLog(null);
+
+    try {
+      await supabase.from('daily_logs').update({ status: 'completed', progress_percentage: 100 }).eq('id', logId);
+      await supabase.from('notifications').insert({
+        recipient_role: newNotif.recipient_role,
+        title: newNotif.title,
+        body: newNotif.body
+      });
+    } catch (err) {
+      console.log('Approved locally');
+    }
+  };
+
   // Handle Sending Email Digest simulation
   const handleSendEmailDigest = () => {
     const todayLog = logs.find((l: DailyLog) => l.log_date === '2026-08-11') || logs[logs.length - 1];
@@ -227,9 +259,23 @@ export function App() {
     setNotifications((prev: NotificationItem[]) => prev.map((n: NotificationItem) => n.id === id ? { ...n, read: true } : n));
   };
 
-  // If user is not authenticated, show LoginPage gate
+  // 1. If user is not authenticated, show LoginPage gate
   if (!authenticatedUser) {
     return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+  }
+
+  // 2. If 2-second Splash Screen is active
+  if (isSplashLoading) {
+    return (
+      <SplashLoader
+        userName={authenticatedUser.name}
+        userRole={authenticatedUser.role}
+        onComplete={() => {
+          setIsSplashLoading(false);
+          setIsSkeletonLoading(true); // Trigger 0.5s skeleton loading
+        }}
+      />
+    );
   }
 
   return (
@@ -238,7 +284,6 @@ export function App() {
       {/* Top Navbar */}
       <Header
         currentRole={currentRole}
-        setCurrentRole={setCurrentRole}
         onOpenAddModal={() => { setSelectedAddDate('2026-08-11'); setShowAddModal(true); }}
         onSendEmailDigest={handleSendEmailDigest}
         notifications={notifications}
@@ -256,102 +301,107 @@ export function App() {
         </div>
       )}
 
-      {/* Main Container */}
-      <main className="max-w-[1788px] mx-auto px-4 lg:px-10 pt-8">
-        
-        {/* Project Hero Header Banner */}
-        <div className="card-elevation p-8 lg:p-10 bg-gradient-to-br from-[#0E6875] via-[#0B535E] to-[#063D45] text-white relative overflow-hidden mb-8 shadow-strong">
-          <div className="absolute -left-16 -bottom-16 w-80 h-80 rounded-full bg-white/10 blur-3xl pointer-events-none" />
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
-            <div>
-              <h2 className="text-3xl lg:text-4xl font-black font-tajawal tracking-tight leading-tight">
-                لوحة المتابعة اليومية والتقويم التفاعلي
-              </h2>
-              <p className="text-sm lg:text-base text-white/90 mt-2 max-w-3xl leading-relaxed font-medium">
-                مرحباً بك {authenticatedUser.name}! يتم تحديث هذا التقويم فور تسجيل أي إنجاز يومي بواسطة أدهم دون الحاجة لإعادة تحميل الصفحة (Supabase Realtime Engine).
-              </p>
-            </div>
+      {/* 3. If 0.5-second Skeleton Loader is active */}
+      {isSkeletonLoading ? (
+        <CalendarSkeleton onComplete={() => setIsSkeletonLoading(false)} />
+      ) : (
+        /* 4. Full Dashboard View */
+        <main className="max-w-[1788px] mx-auto px-4 lg:px-10 pt-8 animate-fadeIn">
+          
+          {/* Project Hero Header Banner */}
+          <div className="card-elevation p-8 lg:p-10 bg-gradient-to-br from-[#0E6875] via-[#0B535E] to-[#063D45] text-white relative overflow-hidden mb-8 shadow-strong">
+            <div className="absolute -left-16 -bottom-16 w-80 h-80 rounded-full bg-white/10 blur-3xl pointer-events-none" />
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
+              <div>
+                <h2 className="text-3xl lg:text-4xl font-black font-tajawal tracking-tight leading-tight">
+                  لوحة المتابعة اليومية والتقويم التفاعلي
+                </h2>
+                <p className="text-sm lg:text-base text-white/90 mt-2 max-w-3xl leading-relaxed font-medium">
+                  مرحباً بك {authenticatedUser.name}! يتم تحديث هذا التقويم فور تسجيل أي إنجاز يومي بواسطة أدهم دون الحاجة لإعادة تحميل الصفحة (Supabase Realtime Engine).
+                </p>
+              </div>
 
-            {/* Quick Mode Indicator Box */}
-            <div className="bg-white/15 backdrop-blur-lg p-5 rounded-[22px] border border-white/25 text-center shrink-0 w-full sm:w-auto shadow-glass">
-              <p className="text-xs font-bold text-white/80">وضع الاستعراض الحالي:</p>
-              <div className="flex items-center justify-center gap-2 mt-2">
-                {currentRole === 'client' ? (
-                  <>
-                    <Crown className="w-6 h-6 text-[#EE6C4D]" />
-                    <span className="font-black text-base text-[#EE6C4D]">حساب د. وائل (عرض للتعليق)</span>
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="w-6 h-6 text-emerald-400" />
-                    <span className="font-black text-base text-emerald-300">حساب أدهم (إضافة وتحديث)</span>
-                  </>
-                )}
+              {/* User Account Role Indicator Box */}
+              <div className="bg-white/15 backdrop-blur-lg p-5 rounded-[22px] border border-white/25 text-center shrink-0 w-full sm:w-auto shadow-glass">
+                <p className="text-xs font-bold text-white/80">الحساب المسجل حالياً:</p>
+                <div className="flex items-center justify-center gap-2 mt-2">
+                  {currentRole === 'client' ? (
+                    <>
+                      <Crown className="w-6 h-6 text-[#EE6C4D]" />
+                      <span className="font-black text-base text-[#EE6C4D]">حساب د. وائل (عرض للتعليق والاعتماد)</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+                      <span className="font-black text-base text-emerald-300">حساب أدهم (إضافة وتحديث الإنجازات)</span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Dashboard Statistics Header */}
-        <StatsCards logs={logs} currentRole={currentRole} />
+          {/* Dashboard Statistics Header */}
+          <StatsCards logs={logs} currentRole={currentRole} />
 
-        {/* View Switcher Tabs */}
-        <div className="flex items-center justify-between my-6 border-b border-[#E2E8F0] pb-4">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setActiveTab('calendar')}
-              className={`flex items-center gap-2.5 px-6 py-3 rounded-[16px] text-xs md:text-sm font-black transition-all ${
-                activeTab === 'calendar'
-                  ? 'bg-[#0E6875] text-white shadow-teal ring-2 ring-[#0E6875]/20'
-                  : 'bg-white text-[#475569] hover:text-[#0F172A] border border-[#CBD5E1]'
-              }`}
-            >
-              <Calendar className="w-4.5 h-4.5" />
-              <span>التقويم التفاعلي (Calendar Grid)</span>
-            </button>
+          {/* View Switcher Tabs */}
+          <div className="flex items-center justify-between my-6 border-b border-[#E2E8F0] pb-4">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setActiveTab('calendar')}
+                className={`flex items-center gap-2.5 px-6 py-3 rounded-[16px] text-xs md:text-sm font-black transition-all ${
+                  activeTab === 'calendar'
+                    ? 'bg-[#0E6875] text-white shadow-teal ring-2 ring-[#0E6875]/20'
+                    : 'bg-white text-[#475569] hover:text-[#0F172A] border border-[#CBD5E1]'
+                }`}
+              >
+                <Calendar className="w-4.5 h-4.5" />
+                <span>التقويم التفاعلي (Calendar Grid)</span>
+              </button>
 
-            <button
-              onClick={() => setActiveTab('timeline')}
-              className={`flex items-center gap-2.5 px-6 py-3 rounded-[16px] text-xs md:text-sm font-black transition-all ${
-                activeTab === 'timeline'
-                  ? 'bg-[#0E6875] text-white shadow-teal ring-2 ring-[#0E6875]/20'
-                  : 'bg-white text-[#475569] hover:text-[#0F172A] border border-[#CBD5E1]'
-              }`}
-            >
-              <GitCommit className="w-4.5 h-4.5" />
-              <span>التسلسل الزمني للإنجازات (Timeline)</span>
-            </button>
+              <button
+                onClick={() => setActiveTab('timeline')}
+                className={`flex items-center gap-2.5 px-6 py-3 rounded-[16px] text-xs md:text-sm font-black transition-all ${
+                  activeTab === 'timeline'
+                    ? 'bg-[#0E6875] text-white shadow-teal ring-2 ring-[#0E6875]/20'
+                    : 'bg-white text-[#475569] hover:text-[#0F172A] border border-[#CBD5E1]'
+                }`}
+              >
+                <GitCommit className="w-4.5 h-4.5" />
+                <span>التسلسل الزمني للإنجازات (Timeline)</span>
+              </button>
+            </div>
+
+            <div className="hidden sm:flex items-center gap-3 text-xs font-bold text-[#475569]">
+              <span className="w-3 h-3 rounded-full bg-emerald-600 shadow-sm" />
+              <span>مكتمل 100%</span>
+              <span className="w-3 h-3 rounded-full bg-amber-500 shadow-sm mr-3" />
+              <span>قيد التنفيذ</span>
+            </div>
           </div>
 
-          <div className="hidden sm:flex items-center gap-3 text-xs font-bold text-[#475569]">
-            <span className="w-3 h-3 rounded-full bg-emerald-600 shadow-sm" />
-            <span>مكتمل 100%</span>
-            <span className="w-3 h-3 rounded-full bg-amber-500 shadow-sm mr-3" />
-            <span>قيد التنفيذ</span>
-          </div>
-        </div>
+          {/* Main View Component */}
+          {activeTab === 'calendar' ? (
+            <CalendarView
+              logs={logs}
+              currentRole={currentRole}
+              onSelectLog={(log: DailyLog) => setSelectedLog(log)}
+              onOpenAddForDate={(dateStr: string) => {
+                setSelectedAddDate(dateStr);
+                setShowAddModal(true);
+              }}
+            />
+          ) : (
+            <TimelineView
+              logs={logs}
+              comments={comments}
+              currentRole={currentRole}
+              onSelectLog={(log: DailyLog) => setSelectedLog(log)}
+            />
+          )}
 
-        {/* Main View Component */}
-        {activeTab === 'calendar' ? (
-          <CalendarView
-            logs={logs}
-            currentRole={currentRole}
-            onSelectLog={(log: DailyLog) => setSelectedLog(log)}
-            onOpenAddForDate={(dateStr: string) => {
-              setSelectedAddDate(dateStr);
-              setShowAddModal(true);
-            }}
-          />
-        ) : (
-          <TimelineView
-            logs={logs}
-            comments={comments}
-            currentRole={currentRole}
-            onSelectLog={(log: DailyLog) => setSelectedLog(log)}
-          />
-        )}
-
-      </main>
+        </main>
+      )}
 
       {/* Day Details Modal */}
       {selectedLog && (
@@ -361,10 +411,7 @@ export function App() {
           comments={comments}
           onClose={() => setSelectedLog(null)}
           onAddComment={handleAddComment}
-          onApproveLog={(logId: string) => {
-            triggerToast('تم اعتماد تقرير الإنجاز بنجاح من د. وائل!');
-            setSelectedLog(null);
-          }}
+          onApproveLog={handleApproveLog}
         />
       )}
 
