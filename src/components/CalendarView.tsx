@@ -95,7 +95,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               title="الانتقال للشهر السابق"
             >
               <ChevronRight className="w-4 h-4 text-[#0E6875]" />
-              <span className="hidden sm:inline">الشهر السابق</span>
+              <span className="hidden md:inline">الشهر السابق</span>
+              <span className="hidden sm:inline md:hidden">السابق</span>
             </motion.button>
 
             <motion.button
@@ -106,7 +107,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               title="العودة للشهر الحالي (اليوم)"
             >
               <CalendarIcon className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">العودة للشهر الحالي</span>
+              <span className="hidden lg:inline">العودة للشهر الحالي</span>
+              <span className="hidden sm:inline lg:hidden">الشهر الحالي</span>
               <span className="sm:hidden">الحالي</span>
             </motion.button>
 
@@ -117,7 +119,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               className="flex items-center gap-1 p-1.5 sm:px-3 sm:py-2 hover:bg-white text-[#0F172A] rounded-[10px] sm:rounded-[12px] text-xs font-black transition-all"
               title="الانتقال للشهر التالي"
             >
-              <span className="hidden sm:inline">الشهر التالي</span>
+              <span className="hidden md:inline">الشهر التالي</span>
+              <span className="hidden sm:inline md:hidden">التالي</span>
               <ChevronLeft className="w-4 h-4 text-[#0E6875]" />
             </motion.button>
           </div>
@@ -239,7 +242,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                         transition={{ duration: 0.2, delay: dayIdx * 0.01 }}
                         whileHover={{ y: -4, scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        className={`min-h-[95px] sm:min-h-[135px] md:min-h-[155px] p-2 sm:p-3 md:p-3.5 rounded-[12px] sm:rounded-[18px] border transition-all relative flex flex-col justify-between ${
+                        className={`min-h-[95px] sm:min-h-[130px] md:min-h-[145px] lg:min-h-[155px] p-1.5 sm:p-2.5 md:p-3 rounded-[12px] sm:rounded-[16px] md:rounded-[18px] border transition-all relative flex flex-col justify-between overflow-hidden ${
                           !isCurrentMonth
                             ? "bg-slate-50/50 border-slate-200 opacity-40"
                             : isToday
@@ -252,7 +255,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                         {/* Top Day Header */}
                         <div className="flex items-center justify-between mb-1 gap-1">
                           <span
-                            className={`text-sm sm:text-base md:text-lg font-black w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shrink-0 ${
+                            className={`text-xs sm:text-base md:text-lg font-black w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center shrink-0 ${
                               isToday
                                 ? "bg-[#0E6875] text-white shadow-teal"
                                 : isCurrentMonth
@@ -277,7 +280,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
                             {log && (
                               <span
-                                className={`hidden sm:inline-block px-2.5 py-0.5 rounded-full text-xs font-black ${
+                                className={`hidden lg:inline-block px-2 py-0.5 rounded-full text-[10px] md:text-xs font-black ${
                                   log.status === "completed"
                                     ? "bg-emerald-100 text-emerald-900 border border-emerald-300"
                                     : log.status === "in_progress"
@@ -311,18 +314,18 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                               </span>
                             </div>
 
-                            {/* Desktop View (>=640px): Full Detailed Title & Hours */}
+                            {/* Desktop/Tablet View (>=640px): Title & Hours */}
                             <div className="hidden sm:flex flex-col justify-between flex-1">
                               <h4 className="text-xs md:text-sm font-extrabold text-[#0F172A] group-hover:text-[#0E6875] line-clamp-2 leading-snug transition-colors">
                                 {log.title}
                               </h4>
 
-                              <div className="mt-2.5 flex items-center justify-between text-xs text-[#475569]">
-                                <span className="flex items-center gap-1 font-extrabold text-[#0E6875] bg-[#E6F3F5] px-2 py-0.5 rounded-md">
-                                  <Clock className="w-3.5 h-3.5" />
+                              <div className="mt-1.5 sm:mt-2 flex flex-wrap items-center justify-between gap-1 text-xs text-[#475569]">
+                                <span className="flex items-center gap-0.5 font-extrabold text-[#0E6875] bg-[#E6F3F5] px-1.5 py-0.5 rounded-md text-[10px] sm:text-xs">
+                                  <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                                   {log.hours_spent}س
                                 </span>
-                                <span className="text-[11px] font-bold text-[#475569] bg-slate-100 px-2 py-0.5 rounded-md">
+                                <span className="text-[10px] sm:text-[11px] font-bold text-[#475569] bg-slate-100 px-1.5 py-0.5 rounded-md">
                                   {log.deliverables?.length || 0} مهام
                                 </span>
                               </div>
@@ -331,22 +334,24 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                         ) : (
                           /* Empty Day Slot Add Action */
                           isCurrentMonth && (
-                            <div className="mt-auto pt-1 flex items-center justify-center sm:justify-between">
-                              <span className="hidden sm:inline text-[11px] font-semibold text-slate-400">
+                            <div className="mt-auto pt-1 flex items-center justify-center lg:justify-between w-full">
+                              <span className="hidden lg:inline text-[11px] font-semibold text-slate-400">
                                 لا يوجد سجل
                               </span>
-                              {currentRole === "executor" && (
+                              {currentRole === "executor" ? (
                                 <motion.button
-                                  whileHover={{ scale: 1.1 }}
-                                  whileTap={{ scale: 0.9 }}
+                                  whileHover={{ scale: 1.08 }}
+                                  whileTap={{ scale: 0.92 }}
                                   onClick={() => onOpenAddForDate(dateStr)}
-                                  className="text-[10px] sm:text-xs text-[#0E6875] hover:text-white hover:bg-[#0E6875] font-extrabold flex items-center gap-0.5 transition-all bg-[#E6F3F5] px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-[6px] sm:rounded-[8px]"
+                                  className="text-[10px] sm:text-xs text-[#0E6875] hover:text-white hover:bg-[#0E6875] font-extrabold flex items-center gap-0.5 transition-all bg-[#E6F3F5] px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-[6px] sm:rounded-[8px] whitespace-nowrap shadow-xs"
                                 >
-                                  <Plus className="w-3 h-3" />
-                                  <span className="hidden sm:inline">
-                                    إضافة
-                                  </span>
+                                  <Plus className="w-3 h-3 shrink-0" />
+                                  <span>إضافة</span>
                                 </motion.button>
+                              ) : (
+                                <span className="lg:hidden text-[10px] sm:text-[11px] font-semibold text-slate-400">
+                                  لا يوجد سجل
+                                </span>
                               )}
                             </div>
                           )
