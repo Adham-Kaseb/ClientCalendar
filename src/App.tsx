@@ -161,6 +161,26 @@ export function App() {
         setSelectedLog(null);
         triggerToast(`قام ${resetUser} بتصفير التقويم وتحديث كافة البيانات فورياً في الوقت الفعلي!`);
       })
+      .on("broadcast", { event: "NEW_COMMENT" }, (payload: any) => {
+        const incomingComment = payload.payload?.comment as Comment;
+        if (!incomingComment) return;
+
+        setComments((prev: Comment[]) => {
+          const exists = prev.some(
+            (c: Comment) =>
+              c.id === incomingComment.id ||
+              (c.log_id === incomingComment.log_id &&
+                c.content === incomingComment.content &&
+                c.author_name === incomingComment.author_name),
+          );
+          if (exists) return prev;
+          return [...prev, incomingComment];
+        });
+
+        if (incomingComment.author_role !== currentRole) {
+          triggerToast(`محادثة فورية (Realtime): وصل رد جديد من ${incomingComment.author_name}`);
+        }
+      })
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "daily_logs" },
@@ -339,6 +359,34 @@ export function App() {
     setComments((prev: Comment[]) => [...prev, newComment]);
     triggerToast("تمت إضافة التعليق وإرساله فوراً");
 
+    // 1. Send Realtime Broadcast event to all active sessions across devices
+    try {
+      if (channelRef.current) {
+        channelRef.current.send({
+          type: "broadcast",
+          event: "NEW_COMMENT",
+          payload: { comment: newComment },
+        });
+      }
+    } catch (err) {
+      console.log("Realtime comment broadcast sent");
+    }
+
+    // 2. Generate Realtime Notification item for recipient
+    const recipientRole: UserRole = currentRole === "client" ? "executor" : "client";
+    const notifTitle = currentRole === "client" ? "تعليق جديد من د. وائل" : "رد جديد من أدهم كاسب";
+    const newNotif: NotificationItem = {
+      id: `notif-c-${Date.now()}`,
+      recipient_role: recipientRole,
+      title: notifTitle,
+      body: content,
+      read: false,
+      created_at: new Date().toISOString(),
+    };
+
+    setNotifications((prev: NotificationItem[]) => [newNotif, ...prev]);
+
+    // 3. Persist Comment & Notification to Supabase PostgreSQL
     try {
       const { data } = await supabase
         .from("comments")
@@ -357,6 +405,12 @@ export function App() {
           prev.map((c: Comment) => (c.id === tempId ? realComment : c)),
         );
       }
+
+      await supabase.from("notifications").insert({
+        recipient_role: newNotif.recipient_role,
+        title: newNotif.title,
+        body: newNotif.body,
+      });
     } catch (err) {
       console.log("Comment stored locally");
     }
