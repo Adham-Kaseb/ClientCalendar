@@ -1,0 +1,166 @@
+import React, { useState } from 'react';
+import { UserRole, NotificationItem, AuthUser } from '../types/database';
+import { 
+  Calendar, 
+  UserCheck, 
+  Crown, 
+  Bell, 
+  PlusCircle, 
+  Send, 
+  LogOut
+} from 'lucide-react';
+import { NotificationCenter } from './NotificationCenter.tsx';
+
+interface HeaderProps {
+  currentRole: UserRole;
+  setCurrentRole: (role: UserRole) => void;
+  onOpenAddModal: () => void;
+  onSendEmailDigest: () => void;
+  notifications: NotificationItem[];
+  onMarkNotificationRead: (id: string) => void;
+  isRealtimeConnected: boolean;
+  authenticatedUser?: AuthUser | null;
+  onSignOut?: () => void;
+}
+
+export const Header: React.FC<HeaderProps> = ({
+  currentRole,
+  setCurrentRole,
+  onOpenAddModal,
+  onSendEmailDigest,
+  notifications,
+  onMarkNotificationRead,
+  isRealtimeConnected,
+  authenticatedUser,
+  onSignOut,
+}) => {
+  const [showNotifications, setShowNotifications] = useState<boolean>(false);
+
+  const unreadCount = notifications.filter(
+    (n: NotificationItem) => !n.read && n.recipient_role === currentRole
+  ).length;
+
+  return (
+    <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 lg:px-10 py-4 shadow-subtle transition-all">
+      <div className="max-w-[1788px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+        
+        {/* Project Branding & Title */}
+        <div className="flex items-center gap-4">
+          <div className="w-13 h-13 rounded-[18px] bg-gradient-to-br from-[#0E6875] to-[#063D45] text-white flex items-center justify-center shadow-teal transform hover:rotate-6 transition-transform shrink-0">
+            <Calendar className="w-7 h-7" />
+          </div>
+          <div>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[#0F172A] font-tajawal">
+                مشروع تايم فالي
+              </h1>
+            </div>
+            <p className="text-xs md:text-sm text-[#475569] font-medium flex items-center gap-2 mt-1">
+              <span>التقويم التفاعلي لمتابعة الإنجازات اليومية</span>
+              <span className="text-gray-300">•</span>
+              <span className="text-[#0E6875] font-extrabold">د. وائل &amp; أدهم كاسب</span>
+            </p>
+          </div>
+        </div>
+
+        {/* Action Controls & Role Switcher */}
+        <div className="flex flex-wrap items-center justify-end gap-3 w-full md:w-auto">
+          
+          {/* Authenticated User Badge & Sign Out */}
+          {authenticatedUser && (
+            <div className="flex items-center gap-2 bg-[#F8FAFC] px-3.5 py-1.5 rounded-[16px] border border-[#CBD5E1]">
+              <span className="text-xs font-black text-[#0F172A]">
+                مرحباً، {authenticatedUser.name}
+              </span>
+              {onSignOut && (
+                <button
+                  onClick={onSignOut}
+                  className="p-1 text-slate-400 hover:text-rose-600 transition-colors"
+                  title="تسجيل الخروج"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Role Switcher Controls */}
+          <div className="bg-[#F8FAFC] p-1.5 rounded-[16px] border border-[#CBD5E1] shadow-inner flex items-center gap-1.5">
+            <button
+              onClick={() => setCurrentRole('executor')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-[12px] text-xs md:text-sm font-extrabold transition-all ${
+                currentRole === 'executor'
+                  ? 'bg-[#0E6875] text-white shadow-teal ring-2 ring-[#0E6875]/20'
+                  : 'text-[#475569] hover:text-[#0F172A] hover:bg-white'
+              }`}
+            >
+              <UserCheck className="w-4 h-4" />
+              <span>أدهم (المُنفّذ)</span>
+            </button>
+
+            <button
+              onClick={() => setCurrentRole('client')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-[12px] text-xs md:text-sm font-extrabold transition-all ${
+                currentRole === 'client'
+                  ? 'bg-[#EE6C4D] text-white shadow-coral ring-2 ring-[#EE6C4D]/20'
+                  : 'text-[#475569] hover:text-[#0F172A] hover:bg-white'
+              }`}
+            >
+              <Crown className="w-4 h-4 text-amber-200" />
+              <span>د. وائل (العميل)</span>
+            </button>
+          </div>
+
+          {/* Quick Action Button for Executor vs Client */}
+          {currentRole === 'executor' ? (
+            <button
+              onClick={onOpenAddModal}
+              className="flex items-center gap-2 bg-[#0E6875] hover:bg-[#063D45] text-white text-xs md:text-sm font-extrabold px-5 py-2.5 rounded-[12px] shadow-teal transition-all transform hover:-translate-y-0.5"
+            >
+              <PlusCircle className="w-4.5 h-4.5" />
+              <span>تسجيل إنجاز اليوم</span>
+            </button>
+          ) : (
+            <button
+              onClick={onSendEmailDigest}
+              className="flex items-center gap-2 bg-[#EE6C4D] hover:bg-[#DB5A3A] text-white text-xs md:text-sm font-extrabold px-5 py-2.5 rounded-[12px] shadow-coral transition-all transform hover:-translate-y-0.5"
+            >
+              <Send className="w-4.5 h-4.5" />
+              <span>إرسال إشعار تلخيصي</span>
+            </button>
+          )}
+
+          {/* Notifications Trigger */}
+          <div className="relative">
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="relative p-3 bg-white hover:bg-[#F8FAFC] text-[#0F172A] rounded-[12px] border border-[#CBD5E1] shadow-subtle transition-all"
+              title="مركز التنبيهات"
+            >
+              <Bell className="w-5 h-5 text-[#0E6875]" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-[#EE6C4D] text-white text-xs font-black w-5.5 h-5.5 rounded-full flex items-center justify-center ring-2 ring-white animate-bounce">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+
+            {/* Notification Drawer Popover */}
+            {showNotifications && (
+              <NotificationCenter
+                notifications={notifications}
+                currentRole={currentRole}
+                onClose={() => setShowNotifications(false)}
+                onMarkRead={onMarkNotificationRead}
+              />
+            )}
+          </div>
+
+        </div>
+
+      </div>
+    </header>
+  );
+};
+
+export default Header;

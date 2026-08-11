@@ -1,0 +1,115 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-dark: #F8FAFC;
+  --bg-dark-card: #FFFFFF;
+  --bg-dark-card-hover: #F1F5F9;
+  --bg-light: #F8FAFC;
+  --bg-light-card: #FFFFFF;
+  --bg-peach: #F8FAFC;
+  --bg-peach-light: #F1F5F9;
+  --bg-teal-light: #E6F3F5;
+  --color-primary: #0E6875;
+  --color-primary-light: #148595;
+  --color-primary-dark: #063D45;
+  --color-primary-glow: rgba(14, 104, 117, 0.25);
+  --color-coral: #EE6C4D;
+  --color-coral-dark: #DB5A3A;
+  --color-coral-glow: rgba(238, 108, 77, 0.3);
+  --color-text-main: #0F172A;
+  --color-text-muted: #475569;
+  --color-text-dark: #0F172A;
+  --color-text-dark-muted: #334155;
+  --color-border-dark: #CBD5E1;
+  --color-border-light: #E2E8F0;
+  --color-border-teal: rgba(14, 104, 117, 0.3);
+  --color-success: #059669;
+  --color-warning: #D97706;
+  --color-accent-purple: #7C3AED;
+}
+
+@layer base {
+  body {
+    background-color: var(--bg-peach);
+    color: var(--color-text-main);
+    font-family: 'Tajawal', sans-serif;
+    line-height: 1.7;
+    font-size: 16px;
+  }
+
+  h1 {
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -1px;
+  }
+
+  h2 {
+    font-size: 36px;
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: -0.5px;
+  }
+
+  h3 {
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1.4;
+  }
+
+  h4 {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  p {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.75;
+  }
+}
+
+/* Glassmorphism and High-Contrast Card Elevations */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0px 12px 32px rgba(14, 104, 117, 0.08);
+}
+
+.card-elevation {
+  background-color: #FFFFFF;
+  border-radius: 24px;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0px 8px 24px -4px rgba(15, 23, 42, 0.04), 0px 4px 12px rgba(14, 104, 117, 0.03);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-elevation:hover {
+  transform: translateY(-2px);
+  box-shadow: 0px 16px 36px -6px rgba(14, 104, 117, 0.14), 0px 4px 16px rgba(0, 0, 0, 0.04);
+  border-color: #CBD5E1;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #0E6875;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #063D45;
+}
