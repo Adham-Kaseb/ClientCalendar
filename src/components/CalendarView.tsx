@@ -195,6 +195,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 // Find comments related to this log
                 const logComments = log ? comments.filter((c: Comment) => c.log_id === log.id) : [];
                 const clientComments = logComments.filter((c: Comment) => c.author_role === 'client');
+                const executorComments = logComments.filter((c: Comment) => c.author_role === 'executor');
+
+                // Determine relevant comments badge depending on logged in role
+                const relevantComments = currentRole === 'client' ? executorComments : clientComments;
+                const badgeBgClass = currentRole === 'client' ? 'bg-[#0E6875] text-white shadow-teal' : 'bg-[#EE6C4D] text-white shadow-coral';
+                const badgeTooltip = currentRole === 'client' 
+                  ? `يوجد ${executorComments.length} رد جديد من أدهم` 
+                  : `يوجد ${clientComments.length} ملاحظة جديدة من د. وائل`;
 
                 return (
                   <motion.div
@@ -226,15 +234,15 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                         {format(day, 'd')}
                       </span>
 
-                      {/* Completion Status & Client Comment Badge (ONLY Icon & Counter) */}
+                      {/* Role-Aware Comment Badge (Adham sees Dr. Wael notes / Dr. Wael sees Adham replies) */}
                       <div className="flex items-center gap-1.5">
-                        {clientComments.length > 0 && (
+                        {relevantComments.length > 0 && (
                           <span 
-                            className="bg-[#EE6C4D] text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-coral flex items-center gap-1 animate-pulse"
-                            title={`يوجد ${clientComments.length} ملاحظة من د. وائل`}
+                            className={`${badgeBgClass} text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 animate-pulse`}
+                            title={badgeTooltip}
                           >
                             <MessageSquare className="w-3 h-3" />
-                            <span>{clientComments.length}</span>
+                            <span>{relevantComments.length}</span>
                           </span>
                         )}
 
@@ -316,6 +324,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               logs.map((log: DailyLog, idx: number) => {
                 const logComments = comments.filter((c: Comment) => c.log_id === log.id);
                 const clientComments = logComments.filter((c: Comment) => c.author_role === 'client');
+                const executorComments = logComments.filter((c: Comment) => c.author_role === 'executor');
+                const relevantComments = currentRole === 'client' ? executorComments : clientComments;
 
                 return (
                   <motion.div
@@ -344,10 +354,16 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                             {log.status === 'completed' ? 'مكتمل 100%' : `قيد التوظيف (${log.progress_percentage}%)`}
                           </span>
 
-                          {clientComments.length > 0 && (
-                            <span className="bg-[#EE6C4D] text-white text-xs font-black px-2.5 py-0.5 rounded-full shadow-coral flex items-center gap-1">
+                          {relevantComments.length > 0 && (
+                            <span className={`text-white text-xs font-black px-2.5 py-0.5 rounded-full shadow-teal flex items-center gap-1 ${
+                              currentRole === 'client' ? 'bg-[#0E6875]' : 'bg-[#EE6C4D]'
+                            }`}>
                               <MessageSquare className="w-3.5 h-3.5" />
-                              <span>{clientComments.length} ملاحظة د. وائل</span>
+                              <span>
+                                {currentRole === 'client' 
+                                  ? `${relevantComments.length} رد من أدهم` 
+                                  : `${relevantComments.length} ملاحظة د. وائل`}
+                              </span>
                             </span>
                           )}
                         </div>

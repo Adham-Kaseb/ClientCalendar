@@ -89,21 +89,27 @@ export const DayDetailsModal: React.FC<DayDetailsModalProps> = ({
             </motion.button>
           </div>
 
-          {/* Modal Tabs Navigation with Animated Underline */}
+          {/* Modal Tabs Navigation */}
           <div className="flex border-b border-[#E2E8F0] px-7 bg-white relative">
             <button
               onClick={() => setActiveTab('details')}
-              className={`py-4 px-5 text-sm font-black transition-colors flex items-center gap-2.5 relative z-10 ${
+              className={`py-4 px-5 text-sm font-black transition-colors flex items-center gap-2.5 relative ${
                 activeTab === 'details' ? 'text-[#0E6875]' : 'text-[#475569] hover:text-[#0F172A]'
               }`}
             >
               <FileText className="w-4.5 h-4.5" />
               <span>تفاصيل الإنجاز والتسليمات</span>
+              {activeTab === 'details' && (
+                <motion.div
+                  layoutId="modalTabLine"
+                  className="absolute bottom-0 inset-x-0 h-0.5 bg-[#0E6875] rounded-full"
+                />
+              )}
             </button>
 
             <button
               onClick={() => setActiveTab('comments')}
-              className={`py-4 px-5 text-sm font-black transition-colors flex items-center gap-2.5 relative z-10 ${
+              className={`py-4 px-5 text-sm font-black transition-colors flex items-center gap-2.5 relative ${
                 activeTab === 'comments' ? 'text-[#0E6875]' : 'text-[#475569] hover:text-[#0F172A]'
               }`}
             >
@@ -114,18 +120,13 @@ export const DayDetailsModal: React.FC<DayDetailsModalProps> = ({
                   {logComments.length}
                 </span>
               )}
+              {activeTab === 'comments' && (
+                <motion.div
+                  layoutId="modalTabLine"
+                  className="absolute bottom-0 inset-x-0 h-0.5 bg-[#0E6875] rounded-full"
+                />
+              )}
             </button>
-
-            {/* Sliding Underline Indicator */}
-            <motion.div
-              layout
-              className="absolute bottom-0 h-0.5 bg-[#0E6875]"
-              style={{
-                left: activeTab === 'details' ? '28px' : '230px',
-                width: activeTab === 'details' ? '180px' : '200px',
-              }}
-              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            />
           </div>
 
           {/* Modal Body Content */}

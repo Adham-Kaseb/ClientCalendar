@@ -17,6 +17,7 @@ interface HeaderProps {
   onSendEmailDigest: () => void;
   notifications: NotificationItem[];
   onMarkNotificationRead: (id: string) => void;
+  onClearAllNotifications: () => void;
   isRealtimeConnected: boolean;
   authenticatedUser?: AuthUser | null;
   onSignOut?: () => void;
@@ -28,6 +29,7 @@ export const Header: React.FC<HeaderProps> = ({
   onSendEmailDigest,
   notifications,
   onMarkNotificationRead,
+  onClearAllNotifications,
   isRealtimeConnected,
   authenticatedUser,
   onSignOut,
@@ -43,22 +45,10 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-[1788px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
         
         {/* Project Branding & Title */}
-        <div className="flex items-center gap-4">
-          <div className="w-13 h-13 rounded-[18px] bg-gradient-to-br from-[#0E6875] to-[#063D45] text-white flex items-center justify-center shadow-teal transform hover:rotate-6 transition-transform shrink-0">
-            <Calendar className="w-7 h-7" />
-          </div>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[#0F172A] font-tajawal">
-                مشروع تايم فالي
-              </h1>
-            </div>
-            <p className="text-xs md:text-sm text-[#475569] font-medium flex items-center gap-2 mt-1">
-              <span>التقويم التفاعلي لمتابعة الإنجازات اليومية</span>
-              <span className="text-gray-300">•</span>
-              <span className="text-[#0E6875] font-extrabold">د. وائل &amp; أدهم كاسب</span>
-            </p>
-          </div>
+        <div>
+          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[#0F172A] font-tajawal">
+            مشروع تايم فالي
+          </h1>
         </div>
 
         {/* Action Controls & Authenticated User Identity */}
@@ -134,6 +124,7 @@ export const Header: React.FC<HeaderProps> = ({
                 currentRole={currentRole}
                 onClose={() => setShowNotifications(false)}
                 onMarkRead={onMarkNotificationRead}
+                onClearAll={onClearAllNotifications}
               />
             )}
           </div>

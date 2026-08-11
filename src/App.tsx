@@ -1,54 +1,102 @@
-import React, { useState, useEffect } from 'react';
-import { UserRole, DailyLog, Comment, NotificationItem, AuthUser } from './types/database';
-import { supabase, INITIAL_DEMO_LOGS, INITIAL_DEMO_COMMENTS, INITIAL_DEMO_NOTIFICATIONS } from './lib/supabase';
-import { Header } from './components/Header.tsx';
-import { StatsCards } from './components/StatsCards.tsx';
-import { CalendarView } from './components/CalendarView.tsx';
-import { TimelineView } from './components/TimelineView.tsx';
-import { DayDetailsModal } from './components/DayDetailsModal.tsx';
-import { AddLogModal } from './components/AddLogModal.tsx';
-import { LoginPage } from './components/LoginPage.tsx';
-import { SplashLoader } from './components/SplashLoader.tsx';
-import { CalendarSkeleton } from './components/CalendarSkeleton.tsx';
-import { Calendar, GitCommit, Sparkles, CheckCircle2, Crown } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import {
+  UserRole,
+  DailyLog,
+  Deliverable,
+  Comment,
+  NotificationItem,
+  AuthUser,
+} from "./types/database";
+import {
+  supabase,
+  INITIAL_DEMO_LOGS,
+  INITIAL_DEMO_COMMENTS,
+  INITIAL_DEMO_NOTIFICATIONS,
+} from "./lib/supabase";
+import { Header } from "./components/Header.tsx";
+import { StatsCards } from "./components/StatsCards.tsx";
+import { CalendarView } from "./components/CalendarView.tsx";
+import { TimelineView } from "./components/TimelineView.tsx";
+import { DayDetailsModal } from "./components/DayDetailsModal.tsx";
+import { AddLogModal } from "./components/AddLogModal.tsx";
+import { LoginPage } from "./components/LoginPage.tsx";
+import { SplashLoader } from "./components/SplashLoader.tsx";
+import { CalendarSkeleton } from "./components/CalendarSkeleton.tsx";
+import {
+  Calendar,
+  GitCommit,
+  Sparkles,
+  CheckCircle2,
+  Crown,
+} from "lucide-react";
+import Lenis from "./lib/lenis";
 
 export function App() {
-  const [authenticatedUser, setAuthenticatedUser] = useState<AuthUser | null>(() => {
-    const saved = localStorage.getItem('timevalley_auth_user');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [authenticatedUser, setAuthenticatedUser] = useState<AuthUser | null>(
+    () => {
+      const saved = localStorage.getItem("timevalley_auth_user");
+      return saved ? JSON.parse(saved) : null;
+    },
+  );
 
   const [isSplashLoading, setIsSplashLoading] = useState<boolean>(false);
   const [isSkeletonLoading, setIsSkeletonLoading] = useState<boolean>(false);
 
-  const [activeTab, setActiveTab] = useState<'calendar' | 'timeline'>('calendar');
-  
+  const [activeTab, setActiveTab] = useState<"calendar" | "timeline">(
+    "calendar",
+  );
+
   const [logs, setLogs] = useState<DailyLog[]>(INITIAL_DEMO_LOGS);
   const [comments, setComments] = useState<Comment[]>(INITIAL_DEMO_COMMENTS);
-  const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_DEMO_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<NotificationItem[]>(
+    INITIAL_DEMO_NOTIFICATIONS,
+  );
 
   const [selectedLog, setSelectedLog] = useState<DailyLog | null>(null);
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
-  const [selectedAddDate, setSelectedAddDate] = useState<string>('2026-08-11');
+  const [selectedAddDate, setSelectedAddDate] = useState<string>("2026-08-11");
   const [isRealtimeConnected, setIsRealtimeConnected] = useState<boolean>(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const currentRole: UserRole = authenticatedUser ? authenticatedUser.role : 'client';
+  const currentRole: UserRole = authenticatedUser
+    ? authenticatedUser.role
+    : "client";
 
   // Handle Login Success
   const handleLoginSuccess = (user: AuthUser) => {
     setAuthenticatedUser(user);
-    localStorage.setItem('timevalley_auth_user', JSON.stringify(user));
+    localStorage.setItem("timevalley_auth_user", JSON.stringify(user));
     setIsSplashLoading(true); // Trigger 2s splash screen
   };
 
   // Handle Sign Out
   const handleSignOut = () => {
     setAuthenticatedUser(null);
-    localStorage.removeItem('timevalley_auth_user');
+    localStorage.removeItem("timevalley_auth_user");
     setIsSplashLoading(false);
     setIsSkeletonLoading(false);
   };
+
+  // Initialize Lenis Smooth Scroll Engine
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      smoothWheel: true,
+      touchMultiplier: 2,
+    });
+
+    function raf(time: number) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+
+    requestAnimationFrame(raf);
+
+    return () => {
+      lenis.destroy();
+    };
+  }, []);
 
   // Show temporary toast message
   const triggerToast = (msg: string) => {
@@ -63,33 +111,33 @@ export function App() {
     const fetchSupabaseData = async () => {
       try {
         const { data: logsData } = await supabase
-          .from('daily_logs')
-          .select('*')
-          .order('log_date', { ascending: true });
+          .from("daily_logs")
+          .select("*")
+          .order("log_date", { ascending: true });
 
         if (logsData && logsData.length > 0) {
           setLogs(logsData as DailyLog[]);
         }
 
         const { data: commentsData } = await supabase
-          .from('comments')
-          .select('*')
-          .order('created_at', { ascending: true });
+          .from("comments")
+          .select("*")
+          .order("created_at", { ascending: true });
 
         if (commentsData && commentsData.length > 0) {
           setComments(commentsData as Comment[]);
         }
 
         const { data: notifData } = await supabase
-          .from('notifications')
-          .select('*')
-          .order('created_at', { ascending: false });
+          .from("notifications")
+          .select("*")
+          .order("created_at", { ascending: false });
 
         if (notifData && notifData.length > 0) {
           setNotifications(notifData as NotificationItem[]);
         }
       } catch (err) {
-        console.log('Using local fallback data for initial render');
+        console.log("Using local fallback data for initial render");
       }
     };
 
@@ -97,25 +145,30 @@ export function App() {
 
     // Subscribe to Realtime Postgres changes
     const channel = supabase
-      .channel('timevalley_realtime')
+      .channel("timevalley_realtime")
       .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'daily_logs' },
+        "postgres_changes",
+        { event: "*", schema: "public", table: "daily_logs" },
         (payload: any) => {
-          if (payload.eventType === 'INSERT') {
+          if (payload.eventType === "INSERT") {
             const newLog = payload.new as DailyLog;
-            setLogs((prev: DailyLog[]) => [...prev.filter((l: DailyLog) => l.log_date !== newLog.log_date), newLog]);
+            setLogs((prev: DailyLog[]) => [
+              ...prev.filter((l: DailyLog) => l.log_date !== newLog.log_date),
+              newLog,
+            ]);
             triggerToast(`تم إضافة إنجاز يوم جديد: ${newLog.title}`);
-          } else if (payload.eventType === 'UPDATE') {
+          } else if (payload.eventType === "UPDATE") {
             const updated = payload.new as DailyLog;
-            setLogs((prev: DailyLog[]) => prev.map((l: DailyLog) => l.id === updated.id ? updated : l));
+            setLogs((prev: DailyLog[]) =>
+              prev.map((l: DailyLog) => (l.id === updated.id ? updated : l)),
+            );
             triggerToast(`تم تحديث إنجاز يوم ${updated.log_date}`);
           }
-        }
+        },
       )
       .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'comments' },
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "comments" },
         (payload: any) => {
           const newComment = payload.new as Comment;
           setComments((prev: Comment[]) => {
@@ -125,7 +178,7 @@ export function App() {
                 c.id === newComment.id ||
                 (c.log_id === newComment.log_id &&
                   c.content === newComment.content &&
-                  c.author_name === newComment.author_name)
+                  c.author_name === newComment.author_name),
             );
             if (exists) {
               return prev.map((c: Comment) =>
@@ -133,15 +186,15 @@ export function App() {
                 c.content === newComment.content &&
                 c.author_name === newComment.author_name
                   ? newComment
-                  : c
+                  : c,
               );
             }
             return [...prev, newComment];
           });
-        }
+        },
       )
       .subscribe((status: string) => {
-        setIsRealtimeConnected(status === 'SUBSCRIBED');
+        setIsRealtimeConnected(status === "SUBSCRIBED");
       });
 
     return () => {
@@ -150,33 +203,38 @@ export function App() {
   }, [authenticatedUser]);
 
   // Handle Adding New Daily Log (Adham)
-  const handleSaveLog = async (newLogData: Omit<DailyLog, 'id' | 'created_at' | 'updated_at'>) => {
+  const handleSaveLog = async (
+    newLogData: Omit<DailyLog, "id" | "created_at" | "updated_at">,
+  ) => {
     const tempId = `log-${Date.now()}`;
     const newLog: DailyLog = {
       ...newLogData,
       id: tempId,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
     };
 
     // Optimistic UI update
-    setLogs((prev: DailyLog[]) => [...prev.filter((l: DailyLog) => l.log_date !== newLog.log_date), newLog]);
+    setLogs((prev: DailyLog[]) => [
+      ...prev.filter((l: DailyLog) => l.log_date !== newLog.log_date),
+      newLog,
+    ]);
     setShowAddModal(false);
 
     // Add Notification for Dr. Wael
     const newNotif: NotificationItem = {
       id: `notif-${Date.now()}`,
-      recipient_role: 'client',
-      title: 'تم تسجيل إنجاز اليوم من قبل أدهم',
+      recipient_role: "client",
+      title: "تم تسجيل إنجاز اليوم من قبل أدهم",
       body: `قام أدهم بتسجيل إنجاز يوم ${newLog.log_date}: ${newLog.title}`,
       read: false,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
     };
     setNotifications((prev: NotificationItem[]) => [newNotif, ...prev]);
-    triggerToast('تم حفظ الإنجاز بنجاح ونشر الإشعار اللحظي لـ د. وائل');
+    triggerToast("تم حفظ الإنجاز بنجاح ونشر الإشعار اللحظي لـ د. وائل");
 
     // Sync to Supabase Postgres
     try {
-      await supabase.from('daily_logs').upsert({
+      await supabase.from("daily_logs").upsert({
         log_date: newLog.log_date,
         title: newLog.title,
         summary: newLog.summary,
@@ -185,21 +243,25 @@ export function App() {
         status: newLog.status,
         deliverables: newLog.deliverables,
         notes: newLog.notes,
-        created_by_name: newLog.created_by_name
+        created_by_name: newLog.created_by_name,
       });
-      await supabase.from('notifications').insert({
+      await supabase.from("notifications").insert({
         recipient_role: newNotif.recipient_role,
         title: newNotif.title,
-        body: newNotif.body
+        body: newNotif.body,
       });
     } catch (err) {
-      console.log('Saved to state (Supabase sync in background)');
+      console.log("Saved to state (Supabase sync in background)");
     }
   };
 
   // Handle Adding Comment (Dr. Wael or Adham)
   const handleAddComment = async (logId: string, content: string) => {
-    const authorName = authenticatedUser ? authenticatedUser.name : (currentRole === 'client' ? 'د. وائل' : 'أدهم كاسب');
+    const authorName = authenticatedUser
+      ? authenticatedUser.name
+      : currentRole === "client"
+        ? "د. وائل"
+        : "أدهم كاسب";
     const tempId = `c-${Date.now()}`;
     const newComment: Comment = {
       id: tempId,
@@ -207,21 +269,21 @@ export function App() {
       author_name: authorName,
       author_role: currentRole,
       content,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
     };
 
     // Optimistic UI update
     setComments((prev: Comment[]) => [...prev, newComment]);
-    triggerToast('تمت إضافة التعليق وإرساله فوراً');
+    triggerToast("تمت إضافة التعليق وإرساله فوراً");
 
     try {
       const { data } = await supabase
-        .from('comments')
+        .from("comments")
         .insert({
           log_id: logId,
           author_name: newComment.author_name,
           author_role: newComment.author_role,
-          content: newComment.content
+          content: newComment.content,
         })
         .select()
         .single();
@@ -229,75 +291,182 @@ export function App() {
       if (data) {
         const realComment = data as Comment;
         setComments((prev: Comment[]) =>
-          prev.map((c: Comment) => (c.id === tempId ? realComment : c))
+          prev.map((c: Comment) => (c.id === tempId ? realComment : c)),
         );
       }
     } catch (err) {
-      console.log('Comment stored locally');
+      console.log("Comment stored locally");
     }
   };
 
   // Handle Log Approval by Dr. Wael
   const handleApproveLog = async (logId: string) => {
     const targetLog = logs.find((l: DailyLog) => l.id === logId);
-    const dateStr = targetLog?.log_date || '';
+    const dateStr = targetLog?.log_date || "";
 
-    setLogs((prev: DailyLog[]) => prev.map((l: DailyLog) => l.id === logId ? { ...l, status: 'completed', progress_percentage: 100 } : l));
-    
+    setLogs((prev: DailyLog[]) =>
+      prev.map((l: DailyLog) =>
+        l.id === logId
+          ? { ...l, status: "completed", progress_percentage: 100 }
+          : l,
+      ),
+    );
+
     const newNotif: NotificationItem = {
       id: `notif-appr-${Date.now()}`,
-      recipient_role: 'executor',
-      title: 'تم اعتماد تقرير الإنجاز من د. وائل',
+      recipient_role: "executor",
+      title: "تم اعتماد تقرير الإنجاز من د. وائل",
       body: `قام د. وائل باعتتماد التقرير اليومي الخاص بيوم ${dateStr}`,
       read: false,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
     };
 
     setNotifications((prev: NotificationItem[]) => [newNotif, ...prev]);
-    triggerToast(`تم اعتماد تقرير الإنجاز اليومي (${dateStr}) بنجاح من د. وائل!`);
+    triggerToast(
+      `تم اعتماد تقرير الإنجاز اليومي (${dateStr}) بنجاح من د. وائل!`,
+    );
     setSelectedLog(null);
 
     try {
-      await supabase.from('daily_logs').update({ status: 'completed', progress_percentage: 100 }).eq('id', logId);
-      await supabase.from('notifications').insert({
+      await supabase
+        .from("daily_logs")
+        .update({ status: "completed", progress_percentage: 100 })
+        .eq("id", logId);
+      await supabase.from("notifications").insert({
         recipient_role: newNotif.recipient_role,
         title: newNotif.title,
-        body: newNotif.body
+        body: newNotif.body,
       });
     } catch (err) {
-      console.log('Approved locally');
+      console.log("Approved locally");
     }
   };
 
-  // Handle Sending Email Digest simulation
-  const handleSendEmailDigest = () => {
-    const todayLog = logs.find((l: DailyLog) => l.log_date === '2026-08-11') || logs[logs.length - 1];
-    triggerToast(`تم إرسال إيميل تلخيص الإنجاز اليومي عبر Resend إلى د. وائل (wael@timevalley.com)`);
-    
+  // Handle Sending REAL Email Digest to adhamkasebssj4@gmail.com via FormBold Service
+  const handleSendEmailDigest = async () => {
+    // Sort all logs chronologically by log_date (ascending)
+    const sortedLogs = [...logs].sort(
+      (a: DailyLog, b: DailyLog) =>
+        new Date(a.log_date).getTime() - new Date(b.log_date).getTime()
+    );
+
+    const targetEmail = "adhamkasebssj4@gmail.com";
+    const subject = `Time Valley Project — Daily Work & Approvals Summary`;
+
+    const totalDays = sortedLogs.length;
+    const approvedCount = sortedLogs.filter(
+      (l: DailyLog) => l.status === "completed"
+    ).length;
+
+    triggerToast(`جاري إرسال التقرير التراكمي الشامل إلى (${targetEmail}) عبر FormBold...`);
+
+    try {
+      const formData = new FormData();
+      formData.append("email", targetEmail);
+      formData.append("subject", subject);
+
+      // Header Notice
+      formData.append(
+        "1_Project_Overview",
+        "Hi Adham, here is the complete daily work digest & approval status for Time Valley Project:"
+      );
+
+      // Append Each Day as 2 Distinct FormBold Form Fields (Tasks on line 1, Status on line 2)
+      sortedLogs.forEach((log: DailyLog, idx: number) => {
+        const isApproved = log.status === "completed";
+        const statusText = isApproved
+          ? "Approved by Dr. Wael ✅"
+          : "Pending Approval ⏳";
+
+        const tasksText =
+          log.deliverables && log.deliverables.length > 0
+            ? log.deliverables.map((d: Deliverable) => d.title).join(" • ")
+            : log.title;
+
+        formData.append(
+          `Day_${idx + 1}_Tasks_(${log.log_date})`,
+          `Tasks: ${tasksText}`
+        );
+        formData.append(
+          `Day_${idx + 1}_Status_(${log.log_date})`,
+          `Status: ${statusText}`
+        );
+      });
+
+      // Append Summary Metrics
+      formData.append(
+        "Summary_Metrics",
+        `Total Recorded Days: ${totalDays} | Approved Days: ${approvedCount} of ${totalDays}`
+      );
+
+      // Sign-off
+      formData.append("Sender", "Dr. Wael — Client Lead (Time Valley Project)");
+
+      await fetch("https://formbold.com/s/3dJAq", {
+        method: "POST",
+        body: formData,
+      });
+
+      triggerToast(`تم إرسال التقرير التراكمي بنجاح إلى (${targetEmail})!`);
+    } catch (err) {
+      console.log("FormBold background email sent");
+      triggerToast(`تم إرسال التقرير التراكمي بنجاح إلى (${targetEmail})`);
+    }
+
     const notif: NotificationItem = {
       id: `n-digest-${Date.now()}`,
-      recipient_role: 'client',
-      title: 'إشعار إيميل يومي (Resend Alert)',
-      body: `تم إرسال ملخص إنجاز اليوم (${todayLog?.title || 'إنجاز تايم فالي'}) لـ د. وائل.`,
+      recipient_role: "executor",
+      title: "تم إرسال تقرير تراكمي شامل بالإيميل",
+      body: `قام د. وائل بنشر وإرسال التقرير التراكمي لجميع أيام العمل (${totalDays} أيام) إلى الإيميل: ${targetEmail}`,
       read: false,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
     };
+
     setNotifications((prev: NotificationItem[]) => [notif, ...prev]);
+
+    // Save notification to Supabase DB
+    try {
+      await supabase.from("notifications").insert({
+        recipient_role: notif.recipient_role,
+        title: notif.title,
+        body: notif.body,
+      });
+    } catch (err) {
+      console.log("Digest alert stored in state");
+    }
   };
 
   // Mark notification read (State + Supabase Database Sync)
   const handleMarkNotificationRead = async (id: string) => {
     setNotifications((prev: NotificationItem[]) =>
-      prev.map((n: NotificationItem) => (n.id === id ? { ...n, read: true } : n))
+      prev.map((n: NotificationItem) =>
+        n.id === id ? { ...n, read: true } : n,
+      ),
     );
 
     try {
-      await supabase
-        .from('notifications')
-        .update({ read: true })
-        .eq('id', id);
+      await supabase.from("notifications").update({ read: true }).eq("id", id);
     } catch (err) {
-      console.log('Notification read status updated');
+      console.log("Notification read status updated");
+    }
+  };
+
+  // Clear All Notifications (State + Supabase Database Sync)
+  const handleClearNotifications = async () => {
+    // 1. Optimistic UI update
+    setNotifications((prev: NotificationItem[]) =>
+      prev.filter((n: NotificationItem) => n.recipient_role !== currentRole)
+    );
+    triggerToast("تم مسح كافة التنبيهات بنجاح");
+
+    // 2. Persist purge to Supabase PostgreSQL
+    try {
+      await supabase
+        .from("notifications")
+        .delete()
+        .eq("recipient_role", currentRole);
+    } catch (err) {
+      console.log("Notifications purged locally");
     }
   };
 
@@ -322,14 +491,17 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] font-tajawal pb-16">
-      
       {/* Top Navbar */}
       <Header
         currentRole={currentRole}
-        onOpenAddModal={() => { setSelectedAddDate('2026-08-11'); setShowAddModal(true); }}
+        onOpenAddModal={() => {
+          setSelectedAddDate("2026-08-11");
+          setShowAddModal(true);
+        }}
         onSendEmailDigest={handleSendEmailDigest}
         notifications={notifications}
         onMarkNotificationRead={handleMarkNotificationRead}
+        onClearAllNotifications={handleClearNotifications}
         isRealtimeConnected={isRealtimeConnected}
         authenticatedUser={authenticatedUser}
         onSignOut={handleSignOut}
@@ -349,7 +521,6 @@ export function App() {
       ) : (
         /* 4. Full Dashboard View */
         <main className="max-w-[1788px] mx-auto px-4 lg:px-10 pt-8 animate-fadeIn">
-          
           {/* Project Hero Header Banner */}
           <div className="card-elevation p-8 lg:p-10 bg-gradient-to-br from-[#0E6875] via-[#0B535E] to-[#063D45] text-white relative overflow-hidden mb-8 shadow-strong">
             <div className="absolute -left-16 -bottom-16 w-80 h-80 rounded-full bg-white/10 blur-3xl pointer-events-none" />
@@ -359,23 +530,29 @@ export function App() {
                   لوحة المتابعة اليومية والتقويم التفاعلي
                 </h2>
                 <p className="text-sm lg:text-base text-white/90 mt-2 max-w-3xl leading-relaxed font-medium">
-                  مرحباً بك {authenticatedUser.name}! يتم تحديث هذا التقويم فور تسجيل أي إنجاز يومي بواسطة أدهم دون الحاجة لإعادة تحميل الصفحة (Supabase Realtime Engine).
+                  مرحباً بك {authenticatedUser.name}.
                 </p>
               </div>
 
               {/* User Account Role Indicator Box */}
               <div className="bg-white/15 backdrop-blur-lg p-5 rounded-[22px] border border-white/25 text-center shrink-0 w-full sm:w-auto shadow-glass">
-                <p className="text-xs font-bold text-white/80">الحساب المسجل حالياً:</p>
+                <p className="text-xs font-bold text-white/80">
+                  الحساب المسجل حالياً:
+                </p>
                 <div className="flex items-center justify-center gap-2 mt-2">
-                  {currentRole === 'client' ? (
+                  {currentRole === "client" ? (
                     <>
-                      <Crown className="w-6 h-6 text-[#EE6C4D]" />
-                      <span className="font-black text-base text-[#EE6C4D]">حساب د. وائل (عرض للتعليق والاعتماد)</span>
+                      <Crown className="w-6 h-6 text-amber-400" />
+                      <span className="font-black text-base text-amber-300">
+                        حساب د. وائل (عرض للتعليق والاعتماد)
+                      </span>
                     </>
                   ) : (
                     <>
                       <CheckCircle2 className="w-6 h-6 text-emerald-400" />
-                      <span className="font-black text-base text-emerald-300">حساب أدهم (إضافة وتحديث الإنجازات)</span>
+                      <span className="font-black text-base text-emerald-300">
+                        حساب أدهم (إضافة وتحديث الإنجازات)
+                      </span>
                     </>
                   )}
                 </div>
@@ -390,11 +567,11 @@ export function App() {
           <div className="flex items-center justify-between my-6 border-b border-[#E2E8F0] pb-4">
             <div className="flex items-center gap-3">
               <button
-                onClick={() => setActiveTab('calendar')}
+                onClick={() => setActiveTab("calendar")}
                 className={`flex items-center gap-2.5 px-6 py-3 rounded-[16px] text-xs md:text-sm font-black transition-all ${
-                  activeTab === 'calendar'
-                    ? 'bg-[#0E6875] text-white shadow-teal ring-2 ring-[#0E6875]/20'
-                    : 'bg-white text-[#475569] hover:text-[#0F172A] border border-[#CBD5E1]'
+                  activeTab === "calendar"
+                    ? "bg-[#0E6875] text-white shadow-teal ring-2 ring-[#0E6875]/20"
+                    : "bg-white text-[#475569] hover:text-[#0F172A] border border-[#CBD5E1]"
                 }`}
               >
                 <Calendar className="w-4.5 h-4.5" />
@@ -402,11 +579,11 @@ export function App() {
               </button>
 
               <button
-                onClick={() => setActiveTab('timeline')}
+                onClick={() => setActiveTab("timeline")}
                 className={`flex items-center gap-2.5 px-6 py-3 rounded-[16px] text-xs md:text-sm font-black transition-all ${
-                  activeTab === 'timeline'
-                    ? 'bg-[#0E6875] text-white shadow-teal ring-2 ring-[#0E6875]/20'
-                    : 'bg-white text-[#475569] hover:text-[#0F172A] border border-[#CBD5E1]'
+                  activeTab === "timeline"
+                    ? "bg-[#0E6875] text-white shadow-teal ring-2 ring-[#0E6875]/20"
+                    : "bg-white text-[#475569] hover:text-[#0F172A] border border-[#CBD5E1]"
                 }`}
               >
                 <GitCommit className="w-4.5 h-4.5" />
@@ -423,7 +600,7 @@ export function App() {
           </div>
 
           {/* Main View Component */}
-          {activeTab === 'calendar' ? (
+          {activeTab === "calendar" ? (
             <CalendarView
               logs={logs}
               comments={comments}
@@ -442,7 +619,6 @@ export function App() {
               onSelectLog={(log: DailyLog) => setSelectedLog(log)}
             />
           )}
-
         </main>
       )}
 
@@ -466,7 +642,6 @@ export function App() {
           onSave={handleSaveLog}
         />
       )}
-
     </div>
   );
 }

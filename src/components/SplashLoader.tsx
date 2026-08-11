@@ -100,13 +100,23 @@ export const SplashLoader: React.FC<SplashLoaderProps> = ({
           مرحباً بك، <strong className="text-white font-bold">{userName}</strong>
         </motion.p>
 
+        {/* Sleek 0% to 100% Percentage Counter */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="mt-6 flex items-center justify-center text-xs font-black tracking-widest text-emerald-400 font-mono bg-white/10 px-3.5 py-1 rounded-full border border-white/15 shadow-inner"
+        >
+          <span>{Math.round(progress)}%</span>
+        </motion.div>
+
         {/* Ultra-Clean Minimal Progress Bar */}
-        <div className="w-56 h-1.5 bg-white/15 rounded-full overflow-hidden mt-7 relative border border-white/10">
+        <div className="w-60 h-1.5 bg-white/15 rounded-full overflow-hidden mt-2.5 relative border border-white/10 shadow-inner">
           <motion.div
             initial={{ width: '0%' }}
             animate={{ width: `${progress}%` }}
             transition={{ ease: 'easeOut' }}
-            className="h-full bg-gradient-to-r from-[#EE6C4D] to-emerald-400 rounded-full shadow-coral"
+            className="h-full bg-gradient-to-r from-[#EE6C4D] via-[#F59E0B] to-amber-300 rounded-full shadow-[0_0_14px_rgba(238,108,77,0.7)]"
           />
         </div>
 
