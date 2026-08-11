@@ -118,8 +118,26 @@ export function App() {
         { event: 'INSERT', schema: 'public', table: 'comments' },
         (payload: any) => {
           const newComment = payload.new as Comment;
-          setComments((prev: Comment[]) => [...prev, newComment]);
-          triggerToast(`تعليق جديد من ${newComment.author_name}`);
+          setComments((prev: Comment[]) => {
+            // Deduplicate: Check if comment already exists (by ID or matching content + author)
+            const exists = prev.some(
+              (c: Comment) =>
+                c.id === newComment.id ||
+                (c.log_id === newComment.log_id &&
+                  c.content === newComment.content &&
+                  c.author_name === newComment.author_name)
+            );
+            if (exists) {
+              return prev.map((c: Comment) =>
+                c.log_id === newComment.log_id &&
+                c.content === newComment.content &&
+                c.author_name === newComment.author_name
+                  ? newComment
+                  : c
+              );
+            }
+            return [...prev, newComment];
+          });
         }
       )
       .subscribe((status: string) => {
@@ -182,8 +200,9 @@ export function App() {
   // Handle Adding Comment (Dr. Wael or Adham)
   const handleAddComment = async (logId: string, content: string) => {
     const authorName = authenticatedUser ? authenticatedUser.name : (currentRole === 'client' ? 'د. وائل' : 'أدهم كاسب');
+    const tempId = `c-${Date.now()}`;
     const newComment: Comment = {
-      id: `c-${Date.now()}`,
+      id: tempId,
       log_id: logId,
       author_name: authorName,
       author_role: currentRole,
@@ -191,16 +210,28 @@ export function App() {
       created_at: new Date().toISOString()
     };
 
+    // Optimistic UI update
     setComments((prev: Comment[]) => [...prev, newComment]);
     triggerToast('تمت إضافة التعليق وإرساله فوراً');
 
     try {
-      await supabase.from('comments').insert({
-        log_id: logId,
-        author_name: newComment.author_name,
-        author_role: newComment.author_role,
-        content: newComment.content
-      });
+      const { data } = await supabase
+        .from('comments')
+        .insert({
+          log_id: logId,
+          author_name: newComment.author_name,
+          author_role: newComment.author_role,
+          content: newComment.content
+        })
+        .select()
+        .single();
+
+      if (data) {
+        const realComment = data as Comment;
+        setComments((prev: Comment[]) =>
+          prev.map((c: Comment) => (c.id === tempId ? realComment : c))
+        );
+      }
     } catch (err) {
       console.log('Comment stored locally');
     }
@@ -254,9 +285,20 @@ export function App() {
     setNotifications((prev: NotificationItem[]) => [notif, ...prev]);
   };
 
-  // Mark notification read
-  const handleMarkNotificationRead = (id: string) => {
-    setNotifications((prev: NotificationItem[]) => prev.map((n: NotificationItem) => n.id === id ? { ...n, read: true } : n));
+  // Mark notification read (State + Supabase Database Sync)
+  const handleMarkNotificationRead = async (id: string) => {
+    setNotifications((prev: NotificationItem[]) =>
+      prev.map((n: NotificationItem) => (n.id === id ? { ...n, read: true } : n))
+    );
+
+    try {
+      await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('id', id);
+    } catch (err) {
+      console.log('Notification read status updated');
+    }
   };
 
   // 1. If user is not authenticated, show LoginPage gate
@@ -295,7 +337,7 @@ export function App() {
 
       {/* Toast Notification Banner */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-[99999] bg-[#0E6875] text-white px-6 py-4 rounded-[18px] shadow-teal flex items-center gap-3 animate-slideUp border border-white/20">
+        <div className="fixed bottom-6 right-6 z-[99999] bg-[#0E6875] text-white px-6 py-4 rounded-[18px] shadow-teal flex items-center gap-3 animate-slideUp border border-[#CBD5E1]">
           <Sparkles className="w-6 h-6 text-[#EE6C4D]" />
           <span className="text-sm font-extrabold">{toastMessage}</span>
         </div>
@@ -384,6 +426,7 @@ export function App() {
           {activeTab === 'calendar' ? (
             <CalendarView
               logs={logs}
+              comments={comments}
               currentRole={currentRole}
               onSelectLog={(log: DailyLog) => setSelectedLog(log)}
               onOpenAddForDate={(dateStr: string) => {

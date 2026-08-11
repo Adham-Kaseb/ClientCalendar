@@ -39,7 +39,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
       </div>
 
       {/* Comments List */}
-      <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+      <div className="space-y-3 max-h-[300px] overflow-y-auto no-scrollbar">
         {comments.length === 0 ? (
           <div className="text-center py-8 bg-[#F8FAFC] rounded-[18px] border border-dashed border-[#CBD5E1]">
             <MessageSquare className="w-8 h-8 text-[#0E6875]/40 mx-auto mb-2" />

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DailyLog, UserRole } from '../types/database';
+import { DailyLog, Comment, UserRole } from '../types/database';
 import { 
   ChevronRight, 
   ChevronLeft, 
@@ -8,7 +8,8 @@ import {
   Filter, 
   LayoutGrid, 
   ListFilter,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  MessageSquare
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 import { ar } from 'date-fns/locale';
@@ -17,6 +18,7 @@ import { CustomSelect } from './CustomSelect.tsx';
 
 interface CalendarViewProps {
   logs: DailyLog[];
+  comments: Comment[];
   currentRole: UserRole;
   onSelectLog: (log: DailyLog) => void;
   onOpenAddForDate: (dateStr: string) => void;
@@ -24,6 +26,7 @@ interface CalendarViewProps {
 
 export const CalendarView: React.FC<CalendarViewProps> = ({
   logs,
+  comments,
   currentRole,
   onSelectLog,
   onOpenAddForDate,
@@ -61,41 +64,44 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       {/* Calendar Header Controls */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 pb-6 border-b border-[#E2E8F0]">
         
-        {/* Month Navigation */}
+        {/* Month Navigation Controls */}
         <div className="flex items-center gap-4">
-          <div className="flex items-center bg-[#F8FAFC] p-1.5 rounded-[16px] border border-[#CBD5E1]">
+          <div className="flex items-center bg-[#F8FAFC] p-1.5 rounded-[18px] border border-[#CBD5E1] shadow-inner">
             <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={prevMonth}
-              className="p-2 hover:bg-white text-[#0F172A] rounded-[10px] transition-all"
-              title="الشهر السابق"
+              className="flex items-center gap-1 px-3 py-2 hover:bg-white text-[#0F172A] rounded-[12px] text-xs font-black transition-all"
+              title="الانتقال للشهر السابق"
             >
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="w-4 h-4 text-[#0E6875]" />
+              <span className="hidden sm:inline">الشهر السابق</span>
             </motion.button>
 
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={resetToToday}
-              className="px-4 py-2 font-black text-sm text-[#0E6875] hover:bg-white rounded-[10px] transition-all"
+              className="px-4 py-2 font-black text-xs md:text-sm text-white bg-[#0E6875] hover:bg-[#063D45] rounded-[12px] shadow-teal transition-all flex items-center gap-1.5"
+              title="العودة للشهر الحالي (اليوم)"
             >
-              اليوم
+              <CalendarIcon className="w-3.5 h-3.5" />
+              <span>العودة للشهر الحالي</span>
             </motion.button>
 
             <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={nextMonth}
-              className="p-2 hover:bg-white text-[#0F172A] rounded-[10px] transition-all"
-              title="الشهر التالي"
+              className="flex items-center gap-1 px-3 py-2 hover:bg-white text-[#0F172A] rounded-[12px] text-xs font-black transition-all"
+              title="الانتقال للشهر التالي"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <span className="hidden sm:inline">الشهر التالي</span>
+              <ChevronLeft className="w-4 h-4 text-[#0E6875]" />
             </motion.button>
           </div>
 
           <h2 className="text-2xl md:text-3xl font-black text-[#0F172A] font-tajawal flex items-center gap-2">
-            <CalendarIcon className="w-6 h-6 text-[#0E6875]" />
             <span>{format(currentMonth, 'MMMM yyyy', { locale: ar })}</span>
           </h2>
         </div>
@@ -186,6 +192,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 const isCurrentMonth = isSameMonth(day, currentMonth);
                 const isToday = isSameDay(day, new Date(2026, 7, 11));
 
+                // Find comments related to this log
+                const logComments = log ? comments.filter((c: Comment) => c.log_id === log.id) : [];
+                const clientComments = logComments.filter((c: Comment) => c.author_role === 'client');
+
                 return (
                   <motion.div
                     key={dateStr}
@@ -216,25 +226,37 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                         {format(day, 'd')}
                       </span>
 
-                      {/* Completion Status Badge */}
-                      {log && (
-                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-black ${
-                          log.status === 'completed' 
-                            ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' 
-                            : log.status === 'in_progress'
-                            ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                            : 'bg-rose-100 text-rose-900 border border-rose-300'
-                        }`}>
-                          {log.progress_percentage}%
-                        </span>
-                      )}
+                      {/* Completion Status & Client Comment Badge (ONLY Icon & Counter) */}
+                      <div className="flex items-center gap-1.5">
+                        {clientComments.length > 0 && (
+                          <span 
+                            className="bg-[#EE6C4D] text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-coral flex items-center gap-1 animate-pulse"
+                            title={`يوجد ${clientComments.length} ملاحظة من د. وائل`}
+                          >
+                            <MessageSquare className="w-3 h-3" />
+                            <span>{clientComments.length}</span>
+                          </span>
+                        )}
+
+                        {log && (
+                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-black ${
+                            log.status === 'completed' 
+                              ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' 
+                              : log.status === 'in_progress'
+                              ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                              : 'bg-rose-100 text-rose-900 border border-rose-300'
+                          }`}>
+                            {log.progress_percentage}%
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {/* Day Content Card */}
                     {log ? (
                       <div 
                         onClick={() => onSelectLog(log)}
-                        className="cursor-pointer mt-1 group"
+                        className="cursor-pointer mt-1 group flex-1 flex flex-col justify-between"
                       >
                         <h4 className="text-xs md:text-sm font-extrabold text-[#0F172A] group-hover:text-[#0E6875] line-clamp-2 leading-snug transition-colors">
                           {log.title}
@@ -291,54 +313,66 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 <p className="text-sm font-black text-[#475569]">لا توجد إنجازات يومية مسجلة حالياً</p>
               </div>
             ) : (
-              logs.map((log: DailyLog, idx: number) => (
-                <motion.div
-                  key={log.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.2, delay: idx * 0.05 }}
-                  whileHover={{ y: -2, scale: 1.01 }}
-                  onClick={() => onSelectLog(log)}
-                  className="p-6 rounded-[22px] bg-white border border-[#E2E8F0] hover:border-[#0E6875] shadow-subtle hover:shadow-teal transition-all cursor-pointer flex flex-col md:flex-row items-start md:items-center justify-between gap-5"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 rounded-[18px] bg-[#E6F3F5] text-[#0E6875] font-black flex flex-col items-center justify-center text-sm shrink-0 border border-[#0E6875]/20">
-                      <span className="text-base">{log.log_date.split('-')[2]}</span>
-                      <span className="text-[10px] uppercase font-bold text-[#475569]">أغسطس</span>
-                    </div>
+              logs.map((log: DailyLog, idx: number) => {
+                const logComments = comments.filter((c: Comment) => c.log_id === log.id);
+                const clientComments = logComments.filter((c: Comment) => c.author_role === 'client');
 
-                    <div>
-                      <div className="flex items-center gap-3">
-                        <h3 className="text-lg font-black text-[#0F172A] font-tajawal">
-                          {log.title}
-                        </h3>
-                        <span className={`px-3 py-1 rounded-full text-xs font-black ${
-                          log.status === 'completed' ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-amber-100 text-amber-900 border border-amber-300'
-                        }`}>
-                          {log.status === 'completed' ? 'مكتمل 100%' : `قيد التوظيف (${log.progress_percentage}%)`}
-                        </span>
+                return (
+                  <motion.div
+                    key={log.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.2, delay: idx * 0.05 }}
+                    whileHover={{ y: -2, scale: 1.01 }}
+                    onClick={() => onSelectLog(log)}
+                    className="p-6 rounded-[22px] bg-white border border-[#E2E8F0] hover:border-[#0E6875] shadow-subtle hover:shadow-teal transition-all cursor-pointer flex flex-col md:flex-row items-start md:items-center justify-between gap-5"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="w-14 h-14 rounded-[18px] bg-[#E6F3F5] text-[#0E6875] font-black flex flex-col items-center justify-center text-sm shrink-0 border border-[#0E6875]/20">
+                        <span className="text-base">{log.log_date.split('-')[2]}</span>
+                        <span className="text-[10px] uppercase font-bold text-[#475569]">أغسطس</span>
                       </div>
 
-                      <p className="text-sm text-[#475569] mt-1.5 leading-relaxed line-clamp-1 font-medium">
-                        {log.summary}
-                      </p>
+                      <div>
+                        <div className="flex items-center gap-3">
+                          <h3 className="text-lg font-black text-[#0F172A] font-tajawal">
+                            {log.title}
+                          </h3>
+                          <span className={`px-3 py-1 rounded-full text-xs font-black ${
+                            log.status === 'completed' ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-amber-100 text-amber-900 border border-amber-300'
+                          }`}>
+                            {log.status === 'completed' ? 'مكتمل 100%' : `قيد التوظيف (${log.progress_percentage}%)`}
+                          </span>
 
-                      <div className="mt-3 flex items-center gap-4 text-xs font-bold text-[#475569]">
-                        <span className="flex items-center gap-1.5 text-[#0E6875] bg-[#E6F3F5] px-2.5 py-1 rounded-md">
-                          <Clock className="w-4 h-4" />
-                          استغرق {log.hours_spent} ساعة عمل
-                        </span>
-                        <span>•</span>
-                        <span>المُنفّذ: {log.created_by_name}</span>
+                          {clientComments.length > 0 && (
+                            <span className="bg-[#EE6C4D] text-white text-xs font-black px-2.5 py-0.5 rounded-full shadow-coral flex items-center gap-1">
+                              <MessageSquare className="w-3.5 h-3.5" />
+                              <span>{clientComments.length} ملاحظة د. وائل</span>
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="text-sm text-[#475569] mt-1.5 leading-relaxed line-clamp-1 font-medium">
+                          {log.summary}
+                        </p>
+
+                        <div className="mt-3 flex items-center gap-4 text-xs font-bold text-[#475569]">
+                          <span className="flex items-center gap-1.5 text-[#0E6875] bg-[#E6F3F5] px-2.5 py-1 rounded-md">
+                            <Clock className="w-4 h-4" />
+                            استغرق {log.hours_spent} ساعة عمل
+                          </span>
+                          <span>•</span>
+                          <span>المُنفّذ: {log.created_by_name}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <button className="text-xs md:text-sm font-extrabold text-white bg-[#0E6875] hover:bg-[#063D45] px-5 py-2.5 rounded-[12px] shadow-teal transition-all shrink-0">
-                    عرض التفاصيل والملاحظات
-                  </button>
-                </motion.div>
-              ))
+                    <button className="text-xs md:text-sm font-extrabold text-white bg-[#0E6875] hover:bg-[#063D45] px-5 py-2.5 rounded-[12px] shadow-teal transition-all shrink-0">
+                      عرض التفاصيل والملاحظات
+                    </button>
+                  </motion.div>
+                );
+              })
             )}
           </motion.div>
         )}

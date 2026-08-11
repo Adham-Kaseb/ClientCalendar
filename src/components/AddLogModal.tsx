@@ -101,7 +101,7 @@ export const AddLogModal: React.FC<AddLogModalProps> = ({
           </div>
 
           {/* Form Body */}
-          <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-4 flex-1">
+          <form onSubmit={handleSubmit} className="p-6 overflow-y-auto no-scrollbar space-y-4 flex-1">
             
             {/* Date & Hours Spent Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

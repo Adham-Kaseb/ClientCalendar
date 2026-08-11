@@ -26,11 +26,11 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
   onMarkRead,
 }) => {
   const roleNotifications = notifications.filter(
-    (n: NotificationItem) => n.recipient_role === currentRole,
+    (n: NotificationItem) => n.recipient_role === currentRole
   );
 
   const unreadCount = roleNotifications.filter(
-    (n: NotificationItem) => !n.read,
+    (n: NotificationItem) => !n.read
   ).length;
 
   return (
@@ -79,7 +79,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
         </div>
 
         {/* List Body */}
-        <div className="p-3.5 max-h-[360px] overflow-y-auto space-y-2.5 relative z-10">
+        <div className="p-3.5 max-h-[360px] overflow-y-auto no-scrollbar space-y-2.5 relative z-10">
           {roleNotifications.length === 0 ? (
             <div className="text-center py-10 px-4 bg-[#F8FAFC] rounded-[22px] border border-dashed border-[#CBD5E1] my-1">
               <div className="w-12 h-12 rounded-full bg-[#E6F3F5] text-[#0E6875] flex items-center justify-center mx-auto mb-3 shadow-inner">
@@ -97,22 +97,15 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
             roleNotifications.map((notif: NotificationItem) => (
               <motion.div
                 key={notif.id}
-                whileHover={{ x: -4 }}
+                whileHover={{ y: -2 }}
                 onClick={() => onMarkRead(notif.id)}
-                className={`p-4 rounded-[20px] border transition-all cursor-pointer relative overflow-hidden ${
+                className={`p-4 rounded-[20px] border transition-all cursor-pointer relative ${
                   notif.read
                     ? "bg-white border-[#E2E8F0] opacity-80"
-                    : "bg-[#FFF0EC] border-[#EE6C4D]/40 shadow-subtle"
+                    : "bg-[#FFF0EC] border-[#EE6C4D]/40 shadow-subtle hover:border-[#EE6C4D]"
                 }`}
               >
-                {/* Left Colored Accent Bar */}
-                <div
-                  className={`absolute left-0 top-0 bottom-0 w-1.5 ${
-                    notif.read ? "bg-slate-300" : "bg-[#EE6C4D]"
-                  }`}
-                />
-
-                <div className="flex items-start justify-between gap-2 mb-1.5 pl-2">
+                <div className="flex items-start justify-between gap-2 mb-1.5">
                   <span className="text-xs md:text-sm font-black text-[#0F172A] leading-snug">
                     {notif.title}
                   </span>
@@ -121,7 +114,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                   )}
                 </div>
 
-                <p className="text-xs text-[#475569] leading-relaxed font-medium pl-2">
+                <p className="text-xs text-[#475569] leading-relaxed font-medium">
                   {notif.body}
                 </p>
 
@@ -155,7 +148,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
         <div className="p-3.5 bg-[#F8FAFC] border-t border-[#E2E8F0] text-center relative z-10 flex items-center justify-center gap-2">
           <ShieldCheck className="w-4 h-4 text-[#0E6875]" />
           <p className="text-[11px] font-extrabold text-[#0E6875]">
-            تحديث فوري
+            تحديث فوري عبر Supabase Realtime &amp; Resend
           </p>
         </div>
       </motion.div>

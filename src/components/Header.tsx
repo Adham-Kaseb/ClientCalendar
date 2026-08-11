@@ -114,12 +114,14 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="relative">
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className="relative p-3 bg-white hover:bg-[#F8FAFC] text-[#0F172A] rounded-[12px] border border-[#CBD5E1] shadow-subtle transition-all"
+              className="relative p-3 bg-white hover:bg-[#F8FAFC] text-[#0F172A] rounded-[14px] border border-[#CBD5E1] shadow-subtle transition-all flex items-center justify-center"
               title="مركز التنبيهات"
             >
               <Bell className="w-5 h-5 text-[#0E6875]" />
+              
+              {/* Perfect Circular Glowing Unread Counter Badge */}
               {unreadCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-[#EE6C4D] text-white text-xs font-black w-5.5 h-5.5 rounded-full flex items-center justify-center ring-2 ring-white animate-bounce">
+                <span className="absolute -top-2 -right-2 bg-gradient-to-r from-[#EE6C4D] to-[#E55335] text-white text-[11px] font-black min-w-[22px] h-[22px] px-1.5 rounded-full flex items-center justify-center leading-none ring-2 ring-white shadow-coral animate-pulse">
                   {unreadCount}
                 </span>
               )}

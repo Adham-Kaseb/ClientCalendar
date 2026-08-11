@@ -129,7 +129,7 @@ export const DayDetailsModal: React.FC<DayDetailsModalProps> = ({
           </div>
 
           {/* Modal Body Content */}
-          <div className="p-7 overflow-y-auto space-y-6 flex-1">
+          <div className="p-7 overflow-y-auto no-scrollbar space-y-6 flex-1">
             
             {activeTab === 'details' ? (
               <motion.div
