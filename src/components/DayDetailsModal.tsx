@@ -224,7 +224,7 @@ export const DayDetailsModal: React.FC<DayDetailsModalProps> = ({
             </div>
 
             <div className="flex items-center gap-3">
-              {onDeleteLog && (
+              {currentRole === 'executor' && onDeleteLog && (
                 <motion.button
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}

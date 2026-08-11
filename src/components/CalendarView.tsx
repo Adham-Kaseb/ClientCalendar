@@ -11,6 +11,7 @@ import {
   Calendar as CalendarIcon,
   MessageSquare,
   MoveHorizontal,
+  Sparkles,
 } from "lucide-react";
 import {
   format,
@@ -78,64 +79,70 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   return (
     <div className="card-elevation p-6 lg:p-8 bg-white border border-[#E2E8F0] my-6 shadow-medium overflow-hidden">
       {/* Calendar Header Controls */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-3 sm:gap-4 pb-5 sm:pb-6 border-b border-[#E2E8F0]">
-        {/* Month Navigation & Title Row */}
-        <div className="flex items-center justify-between w-full md:w-auto gap-3">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-[#0F172A] font-tajawal shrink-0">
-            {format(currentMonth, "MMMM yyyy", { locale: ar })}
-          </h2>
+      <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4 pb-6 border-b border-[#E2E8F0]">
+        {/* Month Navigation & Title Cluster */}
+        <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 sm:gap-6 w-full xl:w-auto">
+          {/* Month Icon & Title Badge */}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-[16px] bg-gradient-to-br from-[#0E6875] to-[#0B535E] text-white flex items-center justify-center shadow-[0_4px_14px_rgba(14,104,117,0.3)] shrink-0">
+              <CalendarIcon className="w-5 h-5 sm:w-5.5 sm:h-5.5" />
+            </div>
+            <div>
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F172A] font-tajawal tracking-tight">
+                {format(currentMonth, "MMMM yyyy", { locale: ar })}
+              </h2>
+              <p className="text-[11px] font-bold text-slate-400 hidden sm:block">
+                استعراض جدول الأيام ومتابعة الإنجازات
+              </p>
+            </div>
+          </div>
 
           {/* Month Nav Buttons Pill */}
-          <div className="flex items-center bg-[#F8FAFC] p-1 sm:p-1.5 rounded-[14px] sm:rounded-[18px] border border-[#CBD5E1] shadow-inner shrink-0">
+          <div className="flex items-center gap-1.5 bg-[#F1F5F9] p-1.5 rounded-[20px] border border-[#E2E8F0] shadow-sm shrink-0">
             <motion.button
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ scale: 1.05, backgroundColor: "#ffffff" }}
               whileTap={{ scale: 0.95 }}
               onClick={prevMonth}
-              className="flex items-center gap-1 p-1.5 sm:px-3 sm:py-2 hover:bg-white text-[#0F172A] rounded-[10px] sm:rounded-[12px] text-xs font-black transition-all"
+              className="p-2 sm:px-3 sm:py-2 text-[#0F172A] hover:text-[#0E6875] rounded-[14px] text-xs font-black transition-all flex items-center gap-1 bg-white/60 shadow-xs"
               title="الانتقال للشهر السابق"
             >
               <ChevronRight className="w-4 h-4 text-[#0E6875]" />
-              <span className="hidden md:inline">الشهر السابق</span>
-              <span className="hidden sm:inline md:hidden">السابق</span>
+              <span className="hidden sm:inline">السابق</span>
             </motion.button>
 
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
               onClick={resetToToday}
-              className="px-2.5 py-1.5 sm:px-4 sm:py-2 font-black text-xs md:text-sm text-white bg-[#0E6875] hover:bg-[#063D45] rounded-[10px] sm:rounded-[12px] shadow-teal transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap shrink-0"
+              className="px-3.5 py-2 font-black text-xs sm:text-sm text-white bg-gradient-to-r from-[#0E6875] to-[#0B535E] hover:from-[#0B535E] hover:to-[#063D45] rounded-[14px] shadow-[0_4px_12px_rgba(14,104,117,0.3)] transition-all flex items-center gap-1.5 whitespace-nowrap"
               title="العودة للشهر الحالي (اليوم)"
             >
-              <CalendarIcon className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">العودة للشهر الحالي</span>
-              <span className="hidden sm:inline lg:hidden">الشهر الحالي</span>
-              <span className="sm:hidden">الحالي</span>
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              <span>الشهر الحالي</span>
             </motion.button>
 
             <motion.button
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ scale: 1.05, backgroundColor: "#ffffff" }}
               whileTap={{ scale: 0.95 }}
               onClick={nextMonth}
-              className="flex items-center gap-1 p-1.5 sm:px-3 sm:py-2 hover:bg-white text-[#0F172A] rounded-[10px] sm:rounded-[12px] text-xs font-black transition-all"
+              className="p-2 sm:px-3 sm:py-2 text-[#0F172A] hover:text-[#0E6875] rounded-[14px] text-xs font-black transition-all flex items-center gap-1 bg-white/60 shadow-xs"
               title="الانتقال للشهر التالي"
             >
-              <span className="hidden md:inline">الشهر التالي</span>
-              <span className="hidden sm:inline md:hidden">التالي</span>
+              <span className="hidden sm:inline">التالي</span>
               <ChevronLeft className="w-4 h-4 text-[#0E6875]" />
             </motion.button>
           </div>
         </div>
 
         {/* View Mode Switcher Toggle */}
-        <div className="flex items-center justify-end gap-2.5 sm:gap-3 w-full md:w-auto">
-          {/* View Mode Toggle */}
-          <div className="flex items-center justify-center bg-[#F8FAFC] p-1 sm:p-1.5 rounded-[14px] border border-[#CBD5E1] relative w-full sm:w-auto">
+        <div className="flex items-center justify-center xl:justify-end w-full xl:w-auto">
+          <div className="flex items-center bg-[#F1F5F9] p-1.5 rounded-[20px] border border-[#E2E8F0] relative w-full sm:w-80 lg:w-72 shadow-sm">
             <button
               onClick={() => setViewMode("month")}
-              className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-[10px] text-xs md:text-sm font-extrabold transition-all relative z-10 ${
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-[14px] text-xs sm:text-sm font-extrabold transition-all relative z-10 ${
                 viewMode === "month"
                   ? "text-white"
-                  : "text-[#475569] hover:text-[#0F172A]"
+                  : "text-slate-600 hover:text-[#0F172A]"
               }`}
             >
               <LayoutGrid className="w-4 h-4" />
@@ -144,10 +151,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
             <button
               onClick={() => setViewMode("list")}
-              className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-[10px] text-xs md:text-sm font-extrabold transition-all relative z-10 ${
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-[14px] text-xs sm:text-sm font-extrabold transition-all relative z-10 ${
                 viewMode === "list"
                   ? "text-white"
-                  : "text-[#475569] hover:text-[#0F172A]"
+                  : "text-slate-600 hover:text-[#0F172A]"
               }`}
             >
               <ListFilter className="w-4 h-4" />
@@ -157,7 +164,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             {/* Animated Tab Background Indicator */}
             <motion.div
               layout
-              className="absolute top-1.5 bottom-1.5 bg-[#0E6875] rounded-[10px] shadow-teal"
+              className="absolute top-1.5 bottom-1.5 bg-gradient-to-r from-[#0E6875] to-[#0B535E] rounded-[14px] shadow-[0_4px_12px_rgba(14,104,117,0.35)]"
               style={{
                 left: viewMode === "month" ? "50%" : "6px",
                 right: viewMode === "month" ? "6px" : "50%",

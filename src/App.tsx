@@ -606,6 +606,8 @@ export function App() {
 
   // Single Log Deletion & Reset for specific day (Admin / Executor)
   const handleDeleteLog = async (logId: string) => {
+    if (currentRole !== "executor") return;
+
     const confirmDelete = window.confirm(
       "هل تؤكد رغبتك في حذف وإعادة ضبط هذا اليوم تحديداً من قاعدة البيانات؟",
     );
@@ -627,6 +629,8 @@ export function App() {
 
   // Master Reset Calendar Progress (Admin - Persistent in Supabase & Realtime)
   const handleResetCalendarProgress = async () => {
+    if (currentRole !== "executor") return;
+
     const confirmReset = window.confirm(
       "تنبيه وتأكيد تصفير الإنجاز:\n\nهل تؤكد رغبتك في تصفير وإعادة ضبط كافة سجلات وملاحظات التقويم نهائياً للإطلاق الرسمي للمشروع؟\n\n(سيتم مسح كافة الأيام والتسليمات والملاحظات والإشعارات بالكامل من Supabase وتحديث كافة الأجهزة المترابطة فورياً).",
     );
@@ -708,7 +712,7 @@ export function App() {
         notifications={notifications}
         onMarkNotificationRead={handleMarkNotificationRead}
         onClearAllNotifications={handleClearNotifications}
-        onResetCalendarProgress={handleResetCalendarProgress}
+        onResetCalendarProgress={currentRole === "executor" ? handleResetCalendarProgress : undefined}
         isResetting={isResetting}
         isRealtimeConnected={isRealtimeConnected}
         authenticatedUser={authenticatedUser}
@@ -742,22 +746,22 @@ export function App() {
                 </p>
               </div>
 
-              {/* User Account Role Indicator Box & Master Reset Button */}
-              <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
-
-
-                <motion.button
-                  whileHover={{ scale: 1.08, rotate: 180 }}
-                  whileTap={{ scale: 0.9 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                  onClick={handleResetCalendarProgress}
-                  disabled={isResetting}
-                  className="w-12 h-12 flex items-center justify-center bg-gradient-to-br from-rose-600 via-rose-500 to-red-600 hover:from-rose-500 hover:to-red-500 text-white border border-white/30 backdrop-blur-xl rounded-[20px] shadow-[0_8px_20px_rgba(225,29,72,0.4)] hover:shadow-[0_10px_28px_rgba(225,29,72,0.6)] transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-                  title="تصفير الإنجازات بالكامل ومسح كافة البيانات من Supabase"
-                >
-                  <RotateCcw className={`w-5 h-5 text-white ${isResetting ? "animate-spin" : ""}`} />
-                </motion.button>
-              </div>
+              {/* User Account Role Indicator Box & Master Reset Button (Admin Only) */}
+              {currentRole === "executor" && (
+                <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
+                  <motion.button
+                    whileHover={{ scale: 1.08, rotate: 180 }}
+                    whileTap={{ scale: 0.9 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    onClick={handleResetCalendarProgress}
+                    disabled={isResetting}
+                    className="w-12 h-12 flex items-center justify-center bg-gradient-to-br from-rose-600 via-rose-500 to-red-600 hover:from-rose-500 hover:to-red-500 text-white border border-white/30 backdrop-blur-xl rounded-[20px] shadow-[0_8px_20px_rgba(225,29,72,0.4)] hover:shadow-[0_10px_28px_rgba(225,29,72,0.6)] transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                    title="تصفير الإنجازات بالكامل ومسح كافة البيانات من Supabase"
+                  >
+                    <RotateCcw className={`w-5 h-5 text-white ${isResetting ? "animate-spin" : ""}`} />
+                  </motion.button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -784,7 +788,7 @@ export function App() {
 
               <button
                 onClick={() => setActiveTab("timeline")}
-                className={`flex items-center gap-2.5 px-6 py-3 rounded-[16px] text-xs md:text-sm font-black transition-all ${
+                className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3 rounded-[14px] sm:rounded-[16px] text-xs sm:text-sm font-black transition-all whitespace-nowrap ${
                   activeTab === "timeline"
                     ? "bg-[#0E6875] text-white shadow-teal ring-2 ring-[#0E6875]/20"
                     : "bg-white text-[#475569] hover:text-[#0F172A] border border-[#CBD5E1]"
@@ -835,7 +839,7 @@ export function App() {
           onClose={() => setSelectedLog(null)}
           onAddComment={handleAddComment}
           onApproveLog={handleApproveLog}
-          onDeleteLog={handleDeleteLog}
+          onDeleteLog={currentRole === "executor" ? handleDeleteLog : undefined}
         />
       )}
 
