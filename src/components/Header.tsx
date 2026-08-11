@@ -21,7 +21,7 @@ interface HeaderProps {
   onClearAllNotifications: () => void;
   onResetCalendarProgress?: () => void;
   isResetting?: boolean;
-  isRealtimeConnected: boolean;
+  isRealtimeConnected?: boolean;
   authenticatedUser?: AuthUser | null;
   onSignOut?: () => void;
 }
@@ -33,7 +33,6 @@ export const Header: React.FC<HeaderProps> = ({
   notifications,
   onMarkNotificationRead,
   onClearAllNotifications,
-  isRealtimeConnected,
   authenticatedUser,
   onSignOut,
 }) => {
@@ -59,12 +58,6 @@ export const Header: React.FC<HeaderProps> = ({
                 <h1 className="text-xl sm:text-2xl font-black tracking-tight text-[#0F172A] font-tajawal">
                   مشروع TimeValley
                 </h1>
-                {isRealtimeConnected && (
-                  <span className="hidden sm:inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-emerald-200 shadow-sm">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    متصل مباشرة
-                  </span>
-                )}
               </div>
               <p className="text-[11px] font-bold text-slate-500 hidden sm:block">
                 التقويم التفاعلي لمتابعة الإنجازات والتسليمات

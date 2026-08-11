@@ -161,6 +161,48 @@ export function App() {
         setSelectedLog(null);
         triggerToast(`قام ${resetUser} بتصفير التقويم وتحديث كافة البيانات فورياً في الوقت الفعلي!`);
       })
+      .on("broadcast", { event: "NEW_LOG" }, (payload: any) => {
+        const incomingLog = payload.payload?.log as DailyLog;
+        const incomingNotif = payload.payload?.notification as NotificationItem;
+        if (!incomingLog) return;
+
+        setLogs((prev: DailyLog[]) => [
+          ...prev.filter((l: DailyLog) => l.log_date !== incomingLog.log_date && l.id !== incomingLog.id),
+          incomingLog,
+        ]);
+
+        if (incomingNotif) {
+          setNotifications((prev: NotificationItem[]) => {
+            if (prev.some((n: NotificationItem) => n.id === incomingNotif.id)) return prev;
+            return [incomingNotif, ...prev];
+          });
+        }
+
+        triggerToast(`تحديث لحظي (Realtime): تم إضافة إنجاز يوم جديد (${incomingLog.title})`);
+      })
+      .on("broadcast", { event: "LOG_APPROVED" }, (payload: any) => {
+        const { logId, dateStr, notification } = payload.payload || {};
+        if (!logId) return;
+        setLogs((prev: DailyLog[]) =>
+          prev.map((l: DailyLog) =>
+            l.id === logId ? { ...l, status: "completed", progress_percentage: 100 } : l,
+          ),
+        );
+        if (notification) {
+          setNotifications((prev: NotificationItem[]) => {
+            if (prev.some((n: NotificationItem) => n.id === notification.id)) return prev;
+            return [notification, ...prev];
+          });
+        }
+        triggerToast(`تحديث لحظي (Realtime): تم اعتماد تقرير إنجاز يوم ${dateStr}`);
+      })
+      .on("broadcast", { event: "DELETE_LOG" }, (payload: any) => {
+        const deletedId = payload.payload?.logId;
+        if (!deletedId) return;
+        setLogs((prev: DailyLog[]) => prev.filter((l: DailyLog) => l.id !== deletedId));
+        setComments((prev: Comment[]) => prev.filter((c: Comment) => c.log_id !== deletedId));
+        triggerToast("تحديث لحظي (Realtime): تم حذف الإنجاز من التقويم");
+      })
       .on("broadcast", { event: "NEW_COMMENT" }, (payload: any) => {
         const incomingComment = payload.payload?.comment as Comment;
         if (!incomingComment) return;
@@ -315,19 +357,52 @@ export function App() {
     setNotifications((prev: NotificationItem[]) => [newNotif, ...prev]);
     triggerToast("تم حفظ الإنجاز بنجاح ونشر الإشعار اللحظي لـ د. وائل");
 
-    // Sync to Supabase Postgres
+    // 1. Send Realtime Broadcast event to all active sessions across devices
     try {
-      await supabase.from("daily_logs").upsert({
-        log_date: newLog.log_date,
-        title: newLog.title,
-        summary: newLog.summary,
-        hours_spent: newLog.hours_spent,
-        progress_percentage: newLog.progress_percentage,
-        status: newLog.status,
-        deliverables: newLog.deliverables,
-        notes: newLog.notes,
-        created_by_name: newLog.created_by_name,
-      });
+      if (channelRef.current) {
+        channelRef.current.send({
+          type: "broadcast",
+          event: "NEW_LOG",
+          payload: { log: newLog, notification: newNotif },
+        });
+      }
+    } catch (err) {
+      console.log("Realtime log broadcast sent");
+    }
+
+    // 2. Sync to Supabase Postgres
+    try {
+      const { data: insertedLog } = await supabase
+        .from("daily_logs")
+        .upsert({
+          log_date: newLog.log_date,
+          title: newLog.title,
+          summary: newLog.summary,
+          hours_spent: newLog.hours_spent,
+          progress_percentage: newLog.progress_percentage,
+          status: newLog.status,
+          deliverables: newLog.deliverables,
+          notes: newLog.notes,
+          created_by_name: newLog.created_by_name,
+        })
+        .select()
+        .single();
+
+      if (insertedLog) {
+        const realLog = insertedLog as DailyLog;
+        setLogs((prev: DailyLog[]) =>
+          prev.map((l: DailyLog) => (l.id === tempId ? realLog : l)),
+        );
+
+        if (channelRef.current) {
+          channelRef.current.send({
+            type: "broadcast",
+            event: "NEW_LOG",
+            payload: { log: realLog, notification: newNotif },
+          });
+        }
+      }
+
       await supabase.from("notifications").insert({
         recipient_role: newNotif.recipient_role,
         title: newNotif.title,
@@ -443,6 +518,19 @@ export function App() {
       `تم اعتماد تقرير الإنجاز اليومي (${dateStr}) بنجاح من د. وائل!`,
     );
     setSelectedLog(null);
+
+    // Send Realtime Broadcast for Log Approval
+    try {
+      if (channelRef.current) {
+        channelRef.current.send({
+          type: "broadcast",
+          event: "LOG_APPROVED",
+          payload: { logId, dateStr, notification: newNotif },
+        });
+      }
+    } catch (err) {
+      console.log("Approval broadcast sent");
+    }
 
     try {
       await supabase
@@ -618,6 +706,19 @@ export function App() {
     setComments((prev: Comment[]) => prev.filter((c: Comment) => c.log_id !== logId));
     setSelectedLog(null);
     triggerToast("تم حذف إنجاز هذا اليوم وإعادة ضبطه بنجاح");
+
+    // Send Realtime Broadcast for Log Deletion
+    try {
+      if (channelRef.current) {
+        channelRef.current.send({
+          type: "broadcast",
+          event: "DELETE_LOG",
+          payload: { logId },
+        });
+      }
+    } catch (err) {
+      console.log("Delete broadcast sent");
+    }
 
     try {
       await supabase.from("comments").delete().eq("log_id", logId);
