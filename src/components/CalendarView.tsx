@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { DailyLog, Comment, UserRole } from "../types/database";
 import {
   ChevronRight,
@@ -44,13 +44,46 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   onSelectLog,
   onOpenAddForDate,
 }) => {
-  const [currentMonth, setCurrentMonth] = useState<Date>(new Date(2026, 7, 1)); // August 2026
+  const [today, setToday] = useState<Date>(new Date());
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<"month" | "list">("month");
+
+  const todayCellRef = useRef<HTMLDivElement | null>(null);
+
+  // Realtime date tracking: update today every 30 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setToday(new Date());
+    }, 30000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Smooth scroll auto-focus into today's day cell when viewing current month
+  useEffect(() => {
+    if (
+      viewMode === "month" &&
+      isSameMonth(today, currentMonth) &&
+      todayCellRef.current
+    ) {
+      const timeoutId = setTimeout(() => {
+        todayCellRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "center",
+        });
+      }, 150);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [currentMonth, today, viewMode]);
 
   // Month navigation
   const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
-  const resetToToday = () => setCurrentMonth(new Date(2026, 7, 11));
+  const resetToToday = () => {
+    const now = new Date();
+    setToday(now);
+    setCurrentMonth(now);
+  };
 
   // Calendar dates generation
   const monthStart = startOfMonth(currentMonth);
@@ -88,11 +121,17 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               <CalendarIcon className="w-5 h-5 sm:w-5.5 sm:h-5.5" />
             </div>
             <div>
-              <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F172A] font-tajawal tracking-tight">
-                {format(currentMonth, "MMMM yyyy", { locale: ar })}
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F172A] font-tajawal tracking-tight">
+                  {format(currentMonth, "MMMM yyyy", { locale: ar })}
+                </h2>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-xs">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                  مباشر
+                </span>
+              </div>
               <p className="text-[11px] font-bold text-slate-400 hidden sm:block">
-                استعراض جدول الأيام ومتابعة الإنجازات
+                اليوم الحقيقي: {format(today, "EEEE، d MMMM yyyy", { locale: ar })}
               </p>
             </div>
           </div>
@@ -214,7 +253,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                     const dateStr = format(day, "yyyy-MM-dd");
                     const log = logsByDate.get(dateStr);
                     const isCurrentMonth = isSameMonth(day, currentMonth);
-                    const isToday = isSameDay(day, new Date(2026, 7, 11));
+                    const isToday = isSameDay(day, today);
 
                     // Find comments related to this log
                     const logComments = log
@@ -244,6 +283,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                     return (
                       <motion.div
                         key={dateStr}
+                        ref={isToday ? todayCellRef : null}
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.2, delay: dayIdx * 0.01 }}
@@ -253,7 +293,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                           !isCurrentMonth
                             ? "bg-slate-50/50 border-slate-200 opacity-40"
                             : isToday
-                              ? "bg-[#FFF8F3] border-[#0E6875] ring-2 ring-[#0E6875]/30 shadow-medium"
+                              ? "bg-[#FFF8F3] border-[#0E6875] ring-2 ring-[#0E6875]/50 shadow-[0_4px_20px_rgba(14,104,117,0.3)] scale-[1.01]"
                               : log
                                 ? "bg-white border-[#E2E8F0] shadow-subtle hover:border-[#0E6875] hover:shadow-teal cursor-pointer"
                                 : "bg-[#F8FAFC] border-dashed border-[#CBD5E1] hover:border-[#0E6875]"
@@ -261,17 +301,25 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                       >
                         {/* Top Day Header */}
                         <div className="flex items-center justify-between mb-1 gap-1">
-                          <span
-                            className={`text-xs sm:text-base md:text-lg font-black w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center shrink-0 ${
-                              isToday
-                                ? "bg-[#0E6875] text-white shadow-teal"
-                                : isCurrentMonth
-                                  ? "text-[#0F172A]"
-                                  : "text-[#94A3B8]"
-                            }`}
-                          >
-                            {format(day, "d")}
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <span
+                              className={`text-xs sm:text-base md:text-lg font-black w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center shrink-0 ${
+                                isToday
+                                  ? "bg-[#0E6875] text-white shadow-teal ring-2 ring-amber-400"
+                                  : isCurrentMonth
+                                    ? "text-[#0F172A]"
+                                    : "text-[#94A3B8]"
+                              }`}
+                            >
+                              {format(day, "d")}
+                            </span>
+                            {isToday && (
+                              <span className="bg-[#0E6875] text-white text-[9px] sm:text-[10px] font-black px-1.5 py-0.5 rounded-full shadow-xs flex items-center gap-0.5 animate-pulse">
+                                <Sparkles className="w-2.5 h-2.5 text-amber-300 shrink-0" />
+                                <span>اليوم</span>
+                              </span>
+                            )}
+                          </div>
 
                           {/* Role-Aware Comment Badge & Percentage Pill */}
                           <div className="flex items-center gap-1 shrink-0">
@@ -415,7 +463,13 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-xs sm:text-sm font-black text-[#0E6875] bg-[#E6F3F5] px-3 py-1 rounded-[10px] border border-[#0E6875]/20 flex items-center gap-1.5">
                           <CalendarIcon className="w-3.5 h-3.5" />
-                          <span>{log.log_date.split("-")[2]} أغسطس 2026</span>
+                          <span>
+                            {format(
+                              new Date(log.log_date + "T00:00:00"),
+                              "d MMMM yyyy",
+                              { locale: ar },
+                            )}
+                          </span>
                         </span>
 
                         <span

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { format } from 'date-fns';
 import { DailyLog, Deliverable } from '../types/database';
 import { X, Plus, Trash2, Sparkles } from 'lucide-react';
 import { CustomSelect } from './CustomSelect.tsx';
@@ -11,7 +12,7 @@ interface AddLogModalProps {
 }
 
 export const AddLogModal: React.FC<AddLogModalProps> = ({
-  initialDate = '2026-08-11',
+  initialDate = format(new Date(), 'yyyy-MM-dd'),
   onClose,
   onSave,
 }) => {

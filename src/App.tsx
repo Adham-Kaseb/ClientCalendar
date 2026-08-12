@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { format } from "date-fns";
 import { motion } from "framer-motion";
 import {
   UserRole,
@@ -56,7 +57,9 @@ export function App() {
 
   const [selectedLog, setSelectedLog] = useState<DailyLog | null>(null);
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
-  const [selectedAddDate, setSelectedAddDate] = useState<string>("2026-08-11");
+  const [selectedAddDate, setSelectedAddDate] = useState<string>(() =>
+    format(new Date(), "yyyy-MM-dd"),
+  );
   const [isResetting, setIsResetting] = useState<boolean>(false);
   const [isRealtimeConnected, setIsRealtimeConnected] = useState<boolean>(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -806,7 +809,7 @@ export function App() {
       <Header
         currentRole={currentRole}
         onOpenAddModal={() => {
-          setSelectedAddDate("2026-08-11");
+          setSelectedAddDate(format(new Date(), "yyyy-MM-dd"));
           setShowAddModal(true);
         }}
         onSendEmailDigest={handleSendEmailDigest}
